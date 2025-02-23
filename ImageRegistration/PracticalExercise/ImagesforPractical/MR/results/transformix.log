@@ -1,5 +1,5 @@
 
-transformix is started at Sun Feb 16 13:41:51 2025.
+transformix is started at Sat Feb 22 14:53:46 2025.
 
 which transformix:   C:/Users/20212077/OneDrive - TU Eindhoven/Desktop/8DM20 - Capita Selecta Medical Imaging/elastix-5.0.0-win64/transformix.exe
 transformix runs at: S20212077
@@ -66,7 +66,7 @@ Command line options from ElastixBase:
 =============== end of ParameterFile: ImagesforPractical/MR\results\TransformParameters.0.txt ===============
 
 Calling all ReadFromFile()'s ...
-  Calling all ReadFromFile()'s took 0.007474 s
+  Calling all ReadFromFile()'s took 0.007453 s
 Transforming points ...
   The transform is evaluated on all points. The result is a deformation field.
   Computing and writing the deformation field ...
@@ -78,6 +78,6 @@ Compute spatial Jacobian (full matrix) ...
   The command-line option "-jacmat" is not used, so no dT/dx computed.
   Computing spatial Jacobian done, it took 0.00s
 
-transformix has finished at Sun Feb 16 13:41:51 2025.
+transformix has finished at Sat Feb 22 14:53:46 2025.
 Total time elapsed: 0.1s.
 
