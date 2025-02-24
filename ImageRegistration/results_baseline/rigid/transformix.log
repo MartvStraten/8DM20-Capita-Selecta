@@ -1,10 +1,10 @@
 
-transformix is started at Sun Feb 23 16:15:30 2025.
+transformix is started at Mon Feb 24 13:07:48 2025.
 
-which transformix:   C:/Users/20212077/OneDrive - TU Eindhoven/Desktop/8DM20 - Capita Selecta Medical Imaging/elastix-5.0.0-win64/transformix.exe
-transformix runs at: S20212077
+which transformix:   C:\Users\20182717\Documents\TUe\Software\Elastix\elastix-5.0.0-win64\transformix.exe
+transformix runs at: 20182717
   Windows  Professional (x64),  (Build 9200)
-  with 16135 MB memory, and 6 cores @ 2592 MHz.
+  with 8067 MB memory, and 4 cores @ 2808 MHz.
 Running transformix with parameter file "results_baseline/rigid\TransformParameters.0.txt".
 
 Reading the elastix parameters from file ...
@@ -25,7 +25,7 @@ Command line options from ElastixBase:
 =============== start of ParameterFile: results_baseline/rigid\TransformParameters.0.txt ===============
 (Transform "EulerTransform")
 (NumberOfParameters 6)
-(TransformParameters -0.071391 -0.012214 0.001440 -8.761557 22.674568 40.527139)
+(TransformParameters 0.012788 0.055166 0.037648 -7.657884 22.781107 29.012307)
 (InitialTransformParametersFileName "NoInitialTransform")
 (UseBinaryFormatForTransformationParameters "false")
 (HowToCombineTransforms "Compose")
@@ -61,9 +61,9 @@ Command line options from ElastixBase:
 
 
 Reading input image ...
-  Reading input image took 0.020467 s
+  Reading input image took 0.058616 s
 Calling all ReadFromFile()'s ...
-  Calling all ReadFromFile()'s took 0.000265 s
+  Calling all ReadFromFile()'s took 0.000282 s
 Transforming points ...
   The command-line option "-def" is not used, so no points are transformed
   Transforming points done, it took 0.00s
@@ -74,8 +74,8 @@ Compute spatial Jacobian (full matrix) ...
   The command-line option "-jacmat" is not used, so no dT/dx computed.
   Computing spatial Jacobian done, it took 0.00s
 Resampling image and writing to disk ...
-  Resampling took 0.03s
+  Resampling took 0.35s
 
-transformix has finished at Sun Feb 23 16:15:30 2025.
-Total time elapsed: 0.2s.
+transformix has finished at Mon Feb 24 13:07:49 2025.
+Total time elapsed: 0.5s.
 
