@@ -79,7 +79,7 @@
 (MaximumStepLength 1.0)
 (MinimumStepLength 0.0001) 
 (Interpolator "BSplineInterpolator")
-(ResampleInterpolator "FinalBSplineInterpolator")
+(ResampleInterpolator "FinalNearestNeighborInterpolator")
 (Resampler "DefaultResampler")
 
 

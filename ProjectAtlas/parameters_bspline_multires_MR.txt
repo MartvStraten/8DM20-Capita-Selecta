@@ -29,11 +29,11 @@
 (Transform "BSplineTransform")
 // The control point spacing of the bspline transformation in
 // the finest resolution level. 
-(FinalGridSpacingInPhysicalUnits 4.0)
+(FinalGridSpacingInPhysicalUnits 16)
 
 // Metric
-(Metric "NormalizedMutualInformation")
-//(SubtractMean "true")
+(Metric "AdvancedNormalizedCorrelation")
+(SubtractMean "true")
 (NumberOfSpatialSamples 4096)
 
 // Refresh these spatial samples in every iteration, and select
@@ -42,7 +42,7 @@
 (ImageSampler "RandomCoordinate")
 
 // Order of B-Spline interpolation used during registration/optimisation.
-(BSplineInterpolationOrder 3)
+(BSplineInterpolationOrder 1)
 
 // Order of B-Spline interpolation used for applying the final
 // deformation.
@@ -62,9 +62,9 @@
 
 
 // Some settings to avoid warnings
-(UseDirectionCosines "false")
+(UseDirectionCosines "true")
 (Interpolator "BSplineInterpolator")
-(ResampleInterpolator "FinalBSplineInterpolator")
+(ResampleInterpolator "FinalNearestNeighborInterpolator")
 (Resampler "DefaultResampler")
 (HowToCombineTransforms "Compose")
 (ErodeMask "false")
