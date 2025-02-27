@@ -4,4 +4,4 @@
 *.jpg
 *.raw
 *.DS_Store
-*result
+result*
