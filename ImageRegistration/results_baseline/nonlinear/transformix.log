@@ -1,10 +1,10 @@
 
-transformix is started at Mon Feb 24 13:10:57 2025.
+transformix is started at Thu Feb 27 15:16:24 2025.
 
-which transformix:   C:/Users/20212077/OneDrive - TU Eindhoven/Desktop/8DM20 - Capita Selecta Medical Imaging/elastix-5.0.0-win64/transformix.exe
-transformix runs at: S20212077
+which transformix:   C:/Tue/CapitaFolder/transformix.exe
+transformix runs at: S20201742
   Windows  Professional (x64),  (Build 9200)
-  with 16135 MB memory, and 6 cores @ 2592 MHz.
+  with 16189 MB memory, and 6 cores @ 2591 MHz.
 Running transformix with parameter file "results_baseline/nonlinear\TransformParameters.0.txt".
 
 Reading the elastix parameters from file ...
@@ -66,9 +66,9 @@ Command line options from ElastixBase:
 
 
 Reading input image ...
-  Reading input image took 0.017465 s
+  Reading input image took 0.017343 s
 Calling all ReadFromFile()'s ...
-  Calling all ReadFromFile()'s took 0.006373 s
+  Calling all ReadFromFile()'s took 0.004692 s
 Transforming points ...
   The command-line option "-def" is not used, so no points are transformed
   Transforming points done, it took 0.00s
@@ -79,8 +79,8 @@ Compute spatial Jacobian (full matrix) ...
   The command-line option "-jacmat" is not used, so no dT/dx computed.
   Computing spatial Jacobian done, it took 0.00s
 Resampling image and writing to disk ...
-  Resampling took 3.71s
+  Resampling took 2.75s
 
-transformix has finished at Mon Feb 24 13:11:01 2025.
-Total time elapsed: 3.9s.
+transformix has finished at Thu Feb 27 15:16:27 2025.
+Total time elapsed: 2.9s.
 
