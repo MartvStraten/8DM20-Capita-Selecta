@@ -19,23 +19,28 @@ def save_augmentation(aug_img: object, orig_path: str, extension: str) -> str:
     return new_path
 
 
-def reldef(img_path: str, deform_params: dict = {"num_control_points": (7, 7, 7), "locked_borders": 2},
-           ext: str = "_aug_reldef") -> str:
-    '''Random elastic deformation of image located at input file path.
+def reldef(img_path: str, mask_path: str, deform_params: dict = {"num_control_points": 7, "max_displacement": 10, 
+            "locked_borders": 2}, ext: str = "_aug_reldef") -> str:
+    '''Random elastic deformation of image and mask located at input file path.
 
     parameters
     img_path: file path to image
+    mask_path: file path to mask
     deform_params: dictionary of parameters for 'tio.RandomElasticDeformation()'
     ext: text to be added after original filepath when saving new image
     
     returns
-    aug_path: file path of the saved augmented image
+    aug_img_path: file path of the saved augmented image
+    aug_mask_path: file path of the saved augmented mask
     '''
     img = sitk.ReadImage(img_path)
+    mask = sitk.ReadImage(mask_path)
     deform = tio.RandomElasticDeformation(**deform_params)
     aug_img = deform(img)
-    aug_path = save_augmentation(aug_img, img_path, extension=ext)
-    return aug_path
+    aug_mask = deform(mask)
+    aug_img_path = save_augmentation(aug_img, img_path, extension=ext)
+    aug_mask_path = save_augmentation(aug_mask, mask_path, extension=ext)
+    return aug_img_path, aug_mask_path
 
 
 def normalise(img_path: str, ext: str = "_aug_norm") -> str:

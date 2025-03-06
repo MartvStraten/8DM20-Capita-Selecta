@@ -49,7 +49,7 @@
 
 // ******************* Optimizer ****************************
 
-(MaximumNumberOfIterations 2500) 
+(MaximumNumberOfIterations 1500) 
 
 // **************** Image sampling **********************
 
@@ -76,7 +76,7 @@
 (DefaultPixelValue 0)
 
 // Choose whether to generate the deformed moving image.
-(WriteResultImage "true")
+(WriteResultImage "false")
 
 // The pixel type and format of the resulting deformed moving image
 (ResultImagePixelType "short")
