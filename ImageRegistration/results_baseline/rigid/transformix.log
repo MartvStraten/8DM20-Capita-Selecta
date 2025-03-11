@@ -1,5 +1,5 @@
 
-transformix is started at Thu Mar  6 14:53:26 2025.
+transformix is started at Sun Mar  9 12:24:28 2025.
 
 which transformix:   C:/Tue/CapitaFolder/transformix.exe
 transformix runs at: S20201742
@@ -14,7 +14,7 @@ InstallingComponents was successful.
 
 ELASTIX version: 5.000
 Command line options from ElastixBase:
--in       ../DevelopmentData\p125\prostaat.mhd
+-in       augmented_mask_train\aug_mask_9.mhd
 -out      results_baseline\rigid\
 -threads  unspecified, so all available threads are used
 -tp       results_baseline/rigid\TransformParameters.0.txt
@@ -25,7 +25,7 @@ Command line options from ElastixBase:
 =============== start of ParameterFile: results_baseline/rigid\TransformParameters.0.txt ===============
 (Transform "EulerTransform")
 (NumberOfParameters 6)
-(TransformParameters -0.004197 0.052316 -0.169159 11.892079 1.073169 -15.522624)
+(TransformParameters -0.024606 -0.114119 -0.209376 156.468719 149.680973 19.023957)
 (InitialTransformParametersFileName "NoInitialTransform")
 (UseBinaryFormatForTransformationParameters "false")
 (HowToCombineTransforms "Compose")
@@ -61,9 +61,9 @@ Command line options from ElastixBase:
 
 
 Reading input image ...
-  Reading input image took 0.033302 s
+  Reading input image took 0.015987 s
 Calling all ReadFromFile()'s ...
-  Calling all ReadFromFile()'s took 0.000362 s
+  Calling all ReadFromFile()'s took 0.000204 s
 Transforming points ...
   The command-line option "-def" is not used, so no points are transformed
   Transforming points done, it took 0.00s
@@ -74,8 +74,8 @@ Compute spatial Jacobian (full matrix) ...
   The command-line option "-jacmat" is not used, so no dT/dx computed.
   Computing spatial Jacobian done, it took 0.00s
 Resampling image and writing to disk ...
-  Resampling took 0.05s
+  Resampling took 0.04s
 
-transformix has finished at Thu Mar  6 14:53:26 2025.
+transformix has finished at Sun Mar  9 12:24:28 2025.
 Total time elapsed: 0.2s.
 
