@@ -111,3 +111,23 @@ def random_rotation(img_path: str, bounds: tuple[int], ext: str = "_aug_rot") ->
     aug_img = rotation(img)
     aug_path = save_augmentation(aug_img, img_path, extension=ext)
     return aug_path
+
+def random_affine(img_path: str, mask_path: str, scale: tuple[int], bounds: tuple[int], ext: str = "_aug_affine") -> str:
+    '''Appply random affine transformation to image located at input file path.
+
+    parameters
+    img_path: file path to image
+    bounds: tuple of min and max rotation in every axis
+    ext: text to be added after original filepath when saving new image
+    
+    returns
+    aug_path: file path of the saved augmented image
+    '''
+    img = sitk.ReadImage(img_path)
+    mask = sitk.ReadImage(mask_path)
+    rotation = tio.RandomAffine(degrees=bounds, scales=scale)
+    aug_img = rotation(img)
+    aug_path = save_augmentation(aug_img, img_path, extension=ext)
+    aug_mask = rotation(mask)
+    aug_path_mask = save_augmentation(aug_mask, mask_path, extension=ext+'_mask')
+    return aug_path, aug_path_mask
