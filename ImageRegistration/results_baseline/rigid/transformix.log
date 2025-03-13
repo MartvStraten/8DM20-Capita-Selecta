@@ -1,5 +1,5 @@
 
-transformix is started at Thu Mar  6 21:39:32 2025.
+transformix is started at Thu Mar 13 10:56:56 2025.
 
 which transformix:   C:/Users/20212077/OneDrive - TU Eindhoven/Desktop/8DM20 - Capita Selecta Medical Imaging\elastix-5.0.0-win64/transformix.exe
 transformix runs at: S20212077
@@ -14,7 +14,7 @@ InstallingComponents was successful.
 
 ELASTIX version: 5.000
 Command line options from ElastixBase:
--in       ../DevelopmentData\p125\prostaat_aug_reldef.mhd
+-in       ../DevelopmentData\p108\prostaat.mhd
 -out      results_baseline\rigid\
 -threads  unspecified, so all available threads are used
 -tp       results_baseline/rigid\TransformParameters.0.txt
@@ -25,7 +25,7 @@ Command line options from ElastixBase:
 =============== start of ParameterFile: results_baseline/rigid\TransformParameters.0.txt ===============
 (Transform "EulerTransform")
 (NumberOfParameters 6)
-(TransformParameters 0.007932 0.048932 -0.162858 12.248472 1.557169 -15.222100)
+(TransformParameters 0.086656 -0.026847 -0.054974 20.344886 -19.422463 -43.715773)
 (InitialTransformParametersFileName "NoInitialTransform")
 (UseBinaryFormatForTransformationParameters "false")
 (HowToCombineTransforms "Compose")
@@ -37,13 +37,13 @@ Command line options from ElastixBase:
 (MovingInternalImagePixelType "float")
 (Size 271 333 86)
 (Index 0 0 0)
-(Spacing 0.4882810000 0.4882810000 0.9999990000)
-(Origin -66.5383000000 -62.3476000000 -26.2872000000)
+(Spacing 0.4882810000 0.4882810000 1.0000000000)
+(Origin -66.4063000000 -62.3756000000 4.9202700000)
 (Direction 1.0000000000 0.0000000000 0.0000000000 0.0000000000 1.0000000000 0.0000000000 0.0000000000 0.0000000000 1.0000000000)
 (UseDirectionCosines "true")
 
 // EulerTransform specific
-(CenterOfRotationPoint -0.6203650000 18.7070460000 16.2127575000)
+(CenterOfRotationPoint -0.4883650000 18.6790460000 47.4202700000)
 (ComputeZYX "false")
 
 // ResampleInterpolator specific
@@ -61,9 +61,9 @@ Command line options from ElastixBase:
 
 
 Reading input image ...
-  Reading input image took 0.035509 s
+  Reading input image took 0.030435 s
 Calling all ReadFromFile()'s ...
-  Calling all ReadFromFile()'s took 0.000162 s
+  Calling all ReadFromFile()'s took 0.000152 s
 Transforming points ...
   The command-line option "-def" is not used, so no points are transformed
   Transforming points done, it took 0.00s
@@ -76,6 +76,6 @@ Compute spatial Jacobian (full matrix) ...
 Resampling image and writing to disk ...
   Resampling took 0.03s
 
-transformix has finished at Thu Mar  6 21:39:32 2025.
+transformix has finished at Thu Mar 13 10:56:56 2025.
 Total time elapsed: 0.2s.
 
