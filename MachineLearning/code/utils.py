@@ -87,14 +87,17 @@ class ProstateMRDataset(torch.utils.data.Dataset):
 
         seed = np.random.randint(2147483647)  # make a seed with numpy generator
         random.seed(seed)
-        return (
-            self.norm_transform(
-                self.img_transform(self.mr_image_list[patient][the_slice, ...]).float()
-            ),
-            self.img_transform(
-                (self.mask_list[patient][the_slice, ...] > 0).astype(np.int32)
-            ),
+        torch.manual_seed(seed)
+
+        x = self.norm_transform(
+            self.img_transform(self.mr_image_list[patient][the_slice, ...]).float()
         )
+        random.seed(seed)
+        torch.manual_seed(seed)
+        y = self.img_transform(
+            (self.mask_list[patient][the_slice, ...] > 0).astype(np.int32)
+        )
+        return x, y
 
 
 class DiceBCELoss(nn.Module):
