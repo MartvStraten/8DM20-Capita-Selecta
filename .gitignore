@@ -1,3 +1,7 @@
-*ImagesforPractical/
-*DevelopmentData/
+*.mhd
+*.zraw
+*.tiff
 *.jpg
+*.raw
+*.DS_Store
+ImageRegistration/atlas.dat

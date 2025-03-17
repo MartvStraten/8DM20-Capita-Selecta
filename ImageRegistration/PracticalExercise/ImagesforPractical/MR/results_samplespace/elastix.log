@@ -1,0 +1,515 @@
+
+elastix is started at Sun Feb 16 14:13:36 2025.
+
+which elastix:   C:/Users/20212077/OneDrive - TU Eindhoven/Desktop/8DM20 - Capita Selecta Medical Imaging/elastix-5.0.0-win64/elastix.exe
+elastix runs at: S20212077
+  Windows  Professional (x64),  (Build 9200)
+  with 16135 MB memory, and 6 cores @ 2592 MHz.
+-------------------------------------------------------------------------
+
+Running elastix with parameter file 0: "ImagesforPractical/MR\parameters_samplespace_MR_random.txt".
+
+Current time: Sun Feb 16 14:13:36 2025.
+Reading the elastix parameters from file ...
+
+Installing all components.
+InstallingComponents was successful.
+
+ELASTIX version: 5.000
+Command line options from ElastixBase:
+-f        ImagesforPractical/MR\patient1.jpg
+-m        ImagesforPractical/MR\patient2.jpg
+-fMask    unspecified, so no fixed mask used
+-mMask    unspecified, so no moving mask used
+-out      ImagesforPractical\MR\results_samplespace\
+-p        ImagesforPractical/MR\parameters_samplespace_MR_random.txt
+-priority unspecified, so NORMAL process priority
+-threads  unspecified, so all available threads are used
+Command line options from TransformBase:
+-t0       unspecified, so no initial transform used
+
+=============== start of ParameterFile: ImagesforPractical/MR\parameters_samplespace_MR_random.txt ===============
+// Example parameter file for B-spline registration
+
+// The internal pixel type, used for internal computations
+// Leave to float in general.
+// NB: this is not the type of the input images! The pixel
+// type of the input images is automatically read from the
+// images themselves.
+(FixedInternalImagePixelType "float")
+(MovingInternalImagePixelType "float")
+
+// The dimensions of the fixed and moving image
+(FixedImageDimension 2)
+(MovingImageDimension 2)
+
+// Registration setup
+(Registration "MultiResolutionRegistration")
+(NumberOfResolutions 1)
+
+// Optimizer
+(Optimizer "FullSearch")
+(FullSearchSpace0 "test" 0 -1.5 1.5 0.01)
+
+
+// Sampling voxels from the images
+
+// Random subsampling
+(ImageSampler "Random")
+(NumberOfSpatialSamples 2048)
+
+
+// Transformation
+(Transform "EulerTransform")
+(CenterOfRotationPoint 128 128)
+
+// Metric
+(Metric "AdvancedNormalizedCorrelation")
+(SubtractMean "true")
+
+
+// Order of B-Spline interpolation used during registration/optimisation.
+(BSplineInterpolationOrder 1)
+
+// Order of B-Spline interpolation used for applying the final
+// deformation.
+(FinalBSplineInterpolationOrder 3)
+
+//Default pixel value for pixels that come from outside the picture:
+(DefaultPixelValue 0)
+
+
+// Choose whether to generate the deformed moving image.
+(WriteResultImage "true")
+
+// The pixel type and format of the resulting deformed moving image
+(ResultImagePixelType "unsigned char")
+(ResultImageFormat "tiff")
+
+
+
+// Some settings to avoid warnings
+(HowToCombineTransforms "Compose")
+(UseDirectionCosines "true")
+(AutomaticScalesEstimation "true")
+(ErodeMask "false")
+(BSplineTransformSplineOrder 3)
+(UseCyclicTransform "false")
+(ShowExactMetricValue "false")
+(CheckNumberOfSamples "true")
+(FixedImageBSplineInterpolationOrder 1)
+(UseRandomSampleRegion "false")
+(MinimumGradientMagnitude 1e-08)
+(RelaxationFactor 0.5)
+(FixedImagePyramid "FixedRecursiveImagePyramid")
+(MovingImagePyramid "MovingRecursiveImagePyramid")
+// The step size of the optimizer, in mm. 
+(MaximumStepLength 1.0)
+(MinimumStepLength 0.0001) 
+(Interpolator "BSplineInterpolator")
+(ResampleInterpolator "FinalBSplineInterpolator")
+(Resampler "DefaultResampler")
+
+
+
+
+
+
+
+=============== end of ParameterFile: ImagesforPractical/MR\parameters_samplespace_MR_random.txt ===============
+
+
+Reading images...
+Reading images took 3 ms.
+
+WARNING: the fixed pyramid schedule is not fully specified!
+  A default pyramid schedule is used.
+WARNING: the moving pyramid schedule is not fully specified!
+  A default pyramid schedule is used.
+WARNING: The parameter "AutomaticTransformInitialization", requested at entry number 0, does not exist at all.
+  The default value "false" is used instead.
+Transform parameters are initialized as: [0, 0, 0]
+Scales are estimated automatically.
+Scales for transform parameters are: [11093, 1, 1]
+Initialization of all components (before registration) took: 2 ms.
+Preparation of the image pyramids took: 0 ms.
+
+Resolution: 0
+WARNING: The parameter "NewSamplesEveryIteration", requested at entry number 0, does not exist at all.
+  The default value "false" is used instead.
+WARNING: The parameter "UseMultiThreadingForMetrics", requested at entry number 0, does not exist at all.
+  The default value "true" is used instead.
+WARNING: The parameter "NewSamplesEveryIteration", requested at entry number 0, does not exist at all.
+  The default value "false" is used instead.
+Setting the fixed masks took: 0 ms.
+Setting the moving masks took: 0 ms.
+Total number of iterations needed in this resolution: 301.
+Elastix initialization of all components (for this resolution) took: 0 ms.
+Initialization of AdvancedNormalizedCorrelation metric took: 1 ms.
+1:ItNr	2:Metric	FS0:test:0	Time[ms]
+0	-0.393546	-1.500000	1.9
+1	-0.391717	-1.490000	0.6
+2	-0.392854	-1.480000	0.6
+3	-0.394918	-1.470000	0.5
+4	-0.398591	-1.460000	0.7
+5	-0.398034	-1.450000	0.6
+6	-0.398888	-1.440000	0.6
+7	-0.401052	-1.430000	0.6
+8	-0.401757	-1.420000	0.5
+9	-0.402869	-1.410000	0.6
+10	-0.400923	-1.400000	0.6
+11	-0.399886	-1.390000	0.5
+12	-0.401449	-1.380000	0.6
+13	-0.399997	-1.370000	0.5
+14	-0.397711	-1.360000	0.6
+15	-0.394669	-1.350000	0.5
+16	-0.391789	-1.340000	0.6
+17	-0.388647	-1.330000	0.5
+18	-0.385642	-1.320000	0.6
+19	-0.380817	-1.310000	0.5
+20	-0.377620	-1.300000	0.6
+21	-0.372886	-1.290000	0.5
+22	-0.369943	-1.280000	0.6
+23	-0.370916	-1.270000	0.5
+24	-0.371430	-1.260000	0.5
+25	-0.369686	-1.250000	0.6
+26	-0.367240	-1.240000	0.5
+27	-0.367369	-1.230000	0.5
+28	-0.366009	-1.220000	0.5
+29	-0.366080	-1.210000	0.5
+30	-0.368896	-1.200000	0.5
+31	-0.370231	-1.190000	0.6
+32	-0.370325	-1.180000	0.7
+33	-0.369593	-1.170000	0.7
+34	-0.366793	-1.160000	0.6
+35	-0.363317	-1.150000	0.5
+36	-0.360801	-1.140000	0.6
+37	-0.359720	-1.130000	0.5
+38	-0.354675	-1.120000	0.5
+39	-0.352023	-1.110000	0.5
+40	-0.349540	-1.100000	0.5
+41	-0.344968	-1.090000	0.5
+42	-0.342525	-1.080000	0.5
+43	-0.343540	-1.070000	0.5
+44	-0.341756	-1.060000	0.5
+45	-0.339831	-1.050000	0.5
+46	-0.338582	-1.040000	0.5
+47	-0.337265	-1.030000	0.5
+48	-0.335767	-1.020000	0.5
+49	-0.332146	-1.010000	0.5
+50	-0.333080	-1.000000	0.5
+51	-0.335095	-0.990000	0.5
+52	-0.337462	-0.980000	0.5
+53	-0.337684	-0.970000	0.5
+54	-0.337453	-0.960000	0.5
+55	-0.340407	-0.950000	0.5
+56	-0.340250	-0.940000	0.5
+57	-0.340310	-0.930000	0.5
+58	-0.344493	-0.920000	0.5
+59	-0.348346	-0.910000	0.5
+60	-0.353295	-0.900000	0.5
+61	-0.358813	-0.890000	0.5
+62	-0.366052	-0.880000	0.6
+63	-0.371393	-0.870000	0.6
+64	-0.371040	-0.860000	0.5
+65	-0.371300	-0.850000	0.5
+66	-0.373303	-0.840000	0.5
+67	-0.377534	-0.830000	0.5
+68	-0.379020	-0.820000	0.5
+69	-0.378732	-0.810000	0.5
+70	-0.379407	-0.800000	0.5
+71	-0.380635	-0.790000	0.5
+72	-0.382756	-0.780000	0.5
+73	-0.383796	-0.770000	0.5
+74	-0.387731	-0.760000	0.5
+75	-0.388921	-0.750000	0.5
+76	-0.390668	-0.740000	0.5
+77	-0.394252	-0.730000	0.5
+78	-0.395562	-0.720000	0.5
+79	-0.398214	-0.710000	0.5
+80	-0.405326	-0.700000	0.5
+81	-0.408591	-0.690000	0.5
+82	-0.411546	-0.680000	0.5
+83	-0.413227	-0.670000	0.5
+84	-0.417634	-0.660000	0.5
+85	-0.418314	-0.650000	0.5
+86	-0.420112	-0.640000	0.5
+87	-0.424758	-0.630000	0.5
+88	-0.432652	-0.620000	0.5
+89	-0.440619	-0.610000	0.5
+90	-0.447340	-0.600000	0.5
+91	-0.454260	-0.590000	0.7
+92	-0.462156	-0.580000	0.5
+93	-0.466823	-0.570000	0.6
+94	-0.472068	-0.560000	0.6
+95	-0.478839	-0.550000	0.6
+96	-0.486008	-0.540000	0.6
+97	-0.493537	-0.530000	0.5
+98	-0.502491	-0.520000	0.6
+99	-0.504606	-0.510000	0.6
+100	-0.508217	-0.500000	0.5
+101	-0.510226	-0.490000	0.5
+102	-0.510866	-0.480000	0.5
+103	-0.515577	-0.470000	0.5
+104	-0.517511	-0.460000	0.5
+105	-0.522843	-0.450000	0.5
+106	-0.526413	-0.440000	0.5
+107	-0.530651	-0.430000	0.5
+108	-0.534756	-0.420000	0.5
+109	-0.536467	-0.410000	0.5
+110	-0.542793	-0.400000	0.5
+111	-0.546992	-0.390000	0.5
+112	-0.549339	-0.380000	0.6
+113	-0.547869	-0.370000	0.5
+114	-0.545248	-0.360000	0.5
+115	-0.540975	-0.350000	0.5
+116	-0.544320	-0.340000	0.5
+117	-0.549148	-0.330000	0.5
+118	-0.557610	-0.320000	0.5
+119	-0.564346	-0.310000	0.5
+120	-0.570366	-0.300000	0.5
+121	-0.578905	-0.290000	0.7
+122	-0.588397	-0.280000	0.8
+123	-0.595018	-0.270000	0.6
+124	-0.597468	-0.260000	0.8
+125	-0.601614	-0.250000	0.6
+126	-0.604894	-0.240000	0.6
+127	-0.605211	-0.230000	0.5
+128	-0.606666	-0.220000	0.6
+129	-0.611491	-0.210000	0.5
+130	-0.614220	-0.200000	0.6
+131	-0.615034	-0.190000	0.5
+132	-0.615679	-0.180000	0.6
+133	-0.618901	-0.170000	0.6
+134	-0.622874	-0.160000	0.5
+135	-0.625651	-0.150000	0.6
+136	-0.629725	-0.140000	0.6
+137	-0.637841	-0.130000	0.6
+138	-0.646994	-0.120000	0.6
+139	-0.654008	-0.110000	0.6
+140	-0.661521	-0.100000	0.6
+141	-0.667950	-0.090000	0.6
+142	-0.677745	-0.080000	0.6
+143	-0.686368	-0.070000	0.6
+144	-0.694701	-0.060000	0.6
+145	-0.703851	-0.050000	0.6
+146	-0.709455	-0.040000	0.6
+147	-0.712377	-0.030000	0.6
+148	-0.718710	-0.020000	0.6
+149	-0.722053	-0.010000	0.7
+150	-0.717857	0.000000	0.7
+151	-0.718959	0.010000	0.7
+152	-0.713779	0.020000	0.8
+153	-0.709280	0.030000	0.7
+154	-0.706161	0.040000	0.6
+155	-0.704193	0.050000	0.7
+156	-0.699572	0.060000	0.7
+157	-0.695896	0.070000	0.6
+158	-0.687506	0.080000	0.6
+159	-0.685992	0.090000	0.6
+160	-0.683487	0.100000	0.6
+161	-0.677679	0.110000	0.6
+162	-0.669273	0.120000	0.6
+163	-0.662181	0.130000	0.6
+164	-0.657083	0.140000	0.6
+165	-0.655177	0.150000	0.6
+166	-0.651560	0.160000	0.6
+167	-0.644086	0.170000	0.6
+168	-0.635755	0.180000	0.6
+169	-0.630484	0.190000	0.6
+170	-0.624241	0.200000	0.6
+171	-0.617478	0.210000	0.6
+172	-0.610943	0.220000	0.5
+173	-0.601625	0.230000	0.5
+174	-0.591147	0.240000	0.5
+175	-0.583217	0.250000	0.5
+176	-0.573797	0.260000	0.6
+177	-0.564130	0.270000	0.6
+178	-0.555408	0.280000	0.6
+179	-0.550300	0.290000	0.7
+180	-0.546224	0.300000	0.6
+181	-0.543360	0.310000	0.6
+182	-0.540853	0.320000	0.6
+183	-0.534965	0.330000	0.6
+184	-0.529945	0.340000	0.5
+185	-0.523556	0.350000	0.5
+186	-0.514096	0.360000	0.5
+187	-0.506839	0.370000	0.5
+188	-0.506715	0.380000	0.5
+189	-0.504626	0.390000	0.5
+190	-0.498670	0.400000	0.5
+191	-0.491822	0.410000	0.5
+192	-0.485765	0.420000	0.5
+193	-0.485592	0.430000	0.5
+194	-0.482033	0.440000	0.5
+195	-0.480742	0.450000	0.5
+196	-0.477661	0.460000	0.5
+197	-0.473075	0.470000	0.5
+198	-0.470918	0.480000	0.5
+199	-0.470273	0.490000	0.5
+200	-0.468603	0.500000	0.5
+201	-0.465555	0.510000	0.5
+202	-0.462402	0.520000	0.5
+203	-0.459752	0.530000	0.6
+204	-0.456684	0.540000	0.5
+205	-0.455514	0.550000	0.6
+206	-0.451695	0.560000	0.6
+207	-0.447244	0.570000	0.5
+208	-0.437874	0.580000	0.5
+209	-0.433872	0.590000	0.5
+210	-0.430914	0.600000	0.5
+211	-0.427746	0.610000	0.5
+212	-0.425720	0.620000	0.5
+213	-0.423881	0.630000	0.5
+214	-0.427024	0.640000	0.5
+215	-0.431341	0.650000	0.5
+216	-0.433831	0.660000	0.5
+217	-0.434105	0.670000	0.5
+218	-0.436641	0.680000	0.5
+219	-0.440960	0.690000	0.5
+220	-0.441482	0.700000	0.5
+221	-0.440583	0.710000	0.5
+222	-0.439888	0.720000	0.5
+223	-0.436147	0.730000	0.5
+224	-0.430239	0.740000	0.5
+225	-0.425698	0.750000	0.5
+226	-0.421461	0.760000	0.5
+227	-0.421771	0.770000	0.5
+228	-0.422094	0.780000	0.5
+229	-0.416728	0.790000	0.5
+230	-0.413841	0.800000	0.5
+231	-0.415215	0.810000	0.7
+232	-0.418102	0.820000	0.5
+233	-0.421441	0.830000	0.5
+234	-0.425781	0.840000	0.5
+235	-0.425399	0.850000	0.5
+236	-0.425954	0.860000	0.5
+237	-0.423733	0.870000	0.5
+238	-0.422828	0.880000	0.5
+239	-0.421712	0.890000	0.5
+240	-0.422816	0.900000	0.5
+241	-0.423188	0.910000	0.5
+242	-0.424451	0.920000	0.5
+243	-0.428012	0.930000	0.5
+244	-0.430265	0.940000	0.5
+245	-0.432783	0.950000	0.5
+246	-0.433566	0.960000	0.5
+247	-0.434035	0.970000	0.5
+248	-0.435685	0.980000	0.5
+249	-0.434612	0.990000	0.5
+250	-0.432276	1.000000	0.5
+251	-0.426548	1.010000	0.5
+252	-0.422147	1.020000	0.5
+253	-0.422024	1.030000	0.5
+254	-0.424464	1.040000	0.5
+255	-0.425942	1.050000	0.5
+256	-0.422549	1.060000	0.5
+257	-0.422367	1.070000	0.5
+258	-0.422429	1.080000	0.5
+259	-0.421963	1.090000	0.5
+260	-0.420582	1.100000	0.5
+261	-0.416223	1.110000	0.5
+262	-0.414768	1.120000	0.5
+263	-0.410744	1.130000	0.5
+264	-0.409082	1.140000	0.6
+265	-0.409235	1.150000	0.6
+266	-0.408236	1.160000	0.6
+267	-0.405902	1.170000	0.5
+268	-0.403793	1.180000	0.5
+269	-0.402908	1.190000	0.5
+270	-0.400024	1.200000	0.5
+271	-0.398471	1.210000	0.5
+272	-0.396647	1.220000	0.5
+273	-0.394732	1.230000	0.5
+274	-0.396215	1.240000	0.5
+275	-0.395107	1.250000	0.6
+276	-0.397888	1.260000	0.5
+277	-0.400943	1.270000	0.5
+278	-0.404354	1.280000	0.5
+279	-0.403984	1.290000	0.5
+280	-0.409620	1.300000	0.6
+281	-0.413430	1.310000	0.6
+282	-0.415325	1.320000	0.6
+283	-0.416692	1.330000	0.5
+284	-0.417658	1.340000	0.5
+285	-0.420493	1.350000	0.5
+286	-0.421968	1.360000	0.5
+287	-0.423542	1.370000	0.6
+288	-0.422943	1.380000	0.6
+289	-0.420127	1.390000	0.6
+290	-0.419841	1.400000	0.6
+291	-0.419319	1.410000	0.6
+292	-0.418374	1.420000	0.6
+293	-0.417018	1.430000	0.6
+294	-0.416895	1.440000	0.6
+295	-0.416244	1.450000	0.6
+296	-0.418565	1.460000	0.6
+297	-0.420948	1.470000	0.6
+298	-0.421447	1.480000	0.6
+299	-0.424672	1.490000	0.6
+300	-0.426566	1.500000	0.6
+Time spent in resolution 0 (ITK initialization and iterating): 0.177 s.
+Stopping condition: The full range has been searched.
+
+Best metric value in this resolution = -0.722053
+Index of the point in the optimization surface image that has the best metric value: [ 149 ]
+The corresponding parameter values: [ -0.010000 ]
+
+
+
+=============== start of TransformParameterFile ===============
+(Transform "EulerTransform")
+(NumberOfParameters 3)
+(TransformParameters -0.010000 0.000000 0.000000)
+(InitialTransformParametersFileName "NoInitialTransform")
+(UseBinaryFormatForTransformationParameters "false")
+(HowToCombineTransforms "Compose")
+
+// Image specific
+(FixedImageDimension 2)
+(MovingImageDimension 2)
+(FixedInternalImagePixelType "float")
+(MovingInternalImagePixelType "float")
+(Size 256 256)
+(Index 0 0)
+(Spacing 1.0000000000 1.0000000000)
+(Origin 0.0000000000 0.0000000000)
+(Direction 1.0000000000 0.0000000000 0.0000000000 1.0000000000)
+(UseDirectionCosines "true")
+
+// EulerTransform specific
+(CenterOfRotationPoint 128.0000000000 128.0000000000)
+
+// ResampleInterpolator specific
+(ResampleInterpolator "FinalBSplineInterpolator")
+(FinalBSplineInterpolationOrder 3)
+
+// Resampler specific
+(Resampler "DefaultResampler")
+(DefaultPixelValue 0.000000)
+(ResultImageFormat "tiff")
+(ResultImagePixelType "unsigned char")
+(CompressResultImage "false")
+
+=============== end of TransformParameterFile ===============
+
+Creating the TransformParameterFile took 0.00s
+
+Registration result checksum: 702278250
+
+Applying final transform ...
+  Applying final transform took 0.01s
+
+Final metric value  = -0.722053
+Time spent on saving the results, applying the final transform etc.: 8 ms.
+Running elastix with parameter file 0: "ImagesforPractical/MR\parameters_samplespace_MR_random.txt", has finished.
+
+
+Current time: Sun Feb 16 14:13:37 2025.
+Time used for running elastix with this parameter file:
+  0.2s.
+
+-------------------------------------------------------------------------
+
+Total time elapsed: 0.3s.
+
