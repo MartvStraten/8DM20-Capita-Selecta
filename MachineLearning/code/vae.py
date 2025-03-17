@@ -18,10 +18,10 @@ class Block(nn.Module):
     def __init__(self, in_ch, out_ch):
         super().__init__()
         self.conv1 = nn.Conv2d(in_ch, out_ch, 3, padding=1)
-        self.bn1 = # TODO   # batch normalisation
+        self.bn1 = nn.BatchNorm2d()
         self.conv2 = nn.Conv2d(out_ch, out_ch, 3, padding=1)
-        self.bn2 = # TODO 
-        self.lrelu =  # TODO  # leaky ReLU
+        self.bn2 = nn.BatchNorm2d()
+        self.lrelu =  nn.LeakyReLU()
 
 
     def forward(self, x):
@@ -36,7 +36,12 @@ class Block(nn.Module):
         # with ReLU activations
         # use batch normalisation
 
-        # TODO
+        x = self.conv1(x)
+        x = self.bn1()
+        x = self.lrelu()
+        x = self.conv2(x)
+        x = self.bn1()
+        x = self.lrelu()
         return x
 
 
@@ -57,10 +62,10 @@ class Encoder(nn.Module):
         super().__init__()
         # convolutional blocks
         self.enc_blocks = nn.ModuleList(
-            # TODO
+            [Block(chs[i], chs[i + 1]) for i in range(len(chs) - 1)]
         )
         # max pooling
-        self.pool = # TODO
+        self.pool = nn.MaxPool2d((2,2))
         # height and width of images at lowest resolution level
         _h, _w = # TODO
 
@@ -83,8 +88,9 @@ class Encoder(nn.Module):
         """
 
         for block in self.enc_blocks:
-            # TODO: conv block           
-            # TODO: pooling 
+            x = self.block(x)
+            x = self.pool(x)
+
         # TODO: output layer          
         return torch.chunk(x, 2, dim=1)  # 2 chunks, 1 each for mu and logvar
 
@@ -119,11 +125,11 @@ class Generator(nn.Module):
         )  # reshaping
 
         self.upconvs = nn.ModuleList(
-            # TODO: transposed convolution            
+            [nn.ConvTranspose2d(chs[i], chs[i], 2, 2) for i in range(len(chs) - 1)]         
         )
 
         self.dec_blocks = nn.ModuleList(
-            # TODO: conv block           
+            [Block(2 * chs[i], chs[i + 1]) for i in range(len(chs) - 1)] 
         )
         self.head = nn.Sequential(
             nn.Conv2d(self.chs[-1], 1, 1),
