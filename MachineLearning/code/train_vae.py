@@ -77,6 +77,8 @@ dataloader = DataLoader(
     pin_memory=True,
 )
 
+print("hello world")
+
 # load validation data
 valid_dataset = utils.ProstateMRDataset(partition["validation"], IMAGE_SIZE, valid=True)
 valid_dataloader = DataLoader(
