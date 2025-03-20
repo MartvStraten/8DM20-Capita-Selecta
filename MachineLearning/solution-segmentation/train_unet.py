@@ -4,6 +4,7 @@ from pathlib import Path
 import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
+from torchvision import make_grid
 from tqdm import tqdm
 
 import u_net
@@ -98,6 +99,7 @@ for epoch in range(N_EPOCHS):
             outputs = unet_model(inputs.to(device))  # forward pass
             loss = loss_function(outputs, labels.to(device).float())
             current_valid_loss += loss.item()
+
 
         unet_model.train()
 

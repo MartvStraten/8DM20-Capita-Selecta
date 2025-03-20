@@ -30,12 +30,14 @@ else:
 # Starting Neptune session
 load_dotenv()
 LOG = True
+
 if LOG:
     run = neptune.init_run(
         description="Frist try VAE",
         name="VAE_1_C",
-        project=os.getenv('NEPTUNE_PROJECT'),
+        project=os.getenv('NEPTUNE_PROJECT_VAE'),
         api_token=os.getenv("NEPTUNE_KEY"),
+        mode="debug"
     )  
 
 
@@ -43,7 +45,8 @@ if LOG:
 
 # directorys with data and to store training checkpoints and logs
 
-DATA_DIR = Path.cwd() / "DevelopmentData"
+DATA_DIR = Path.cwd()/ "DevelopmentData"
+print(DATA_DIR)
 print(DATA_DIR)
 CHECKPOINTS_DIR = Path.cwd() / "vae_model_weights"
 CHECKPOINTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -158,16 +161,16 @@ for epoch in range(N_EPOCHS):
             loss = loss_function(inputs.to(device), outputs.to(device), mu=mu, logvar=logvar)
             current_valid_loss += loss
 
-        optimizer.step()  # update weights
         # save examples of real/fake images
         if (epoch + 1) % DISPLAY_FREQ == 0:
-            x_recon = outputs.detach().cpu()
+            x_recon = outputs
             img_grid = make_grid(
-                torch.cat((x_recon[:5], x_real.detach().cpu()[:5])), nrow=5, padding=12, pad_value=-1
+                torch.cat((x_recon[:5].cpu(), x_real.detach()[:5].cpu())), nrow=5, padding=12, pad_value=-1
             )
             save_image(img_grid, "buffer.png")
             if LOG:
-                run["images/realfake"].append(value=Image.open("buffer.png"), description=f'EPOCH: {epoch}')
+                run["images/realfake"].append(value=neptune.types.File.as_image((np.clip(img_grid[0][np.newaxis], -1, 1) / 2 + 0.5).squeeze()), 
+                                              description=f'EPOCH: {epoch}')
 
             # writer.add_image(
             #     "Real_fake", np.clip(img_grid[0][np.newaxis], -1, 1) / 2 + 0.5, epoch + 1
@@ -189,7 +192,8 @@ for epoch in range(N_EPOCHS):
             )
             save_image(img_grid, "buffer.png")
             if LOG:
-                run["images/reconstructions"].append(value=Image.open("buffer.png"), description=f'EPOCH: {epoch}')
+                run["images/reconstructions"].append(value=neptune.types.File.as_image((np.clip(img_grid[0][np.newaxis], -1, 1) / 2 + 0.5).squeeze()), 
+                                                     description=f'EPOCH: {epoch}')
         if LOG:
             run["train/loss"].append(current_train_loss)
             run["valid/loss"].append(current_valid_loss)

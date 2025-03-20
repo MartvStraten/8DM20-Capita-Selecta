@@ -8,6 +8,13 @@ from tqdm import tqdm
 
 import u_net
 import utils
+import neptune
+import os
+import dotenv
+from torchvision.utils import make_grid, save_image
+import numpy as np
+
+dotenv.load_dotenv()
 
 # to ensure reproducible training/validation split
 random.seed(42)
@@ -21,7 +28,7 @@ else:
     device = torch.device("cpu")
 
 # directorys with data and to store training checkpoints and logs
-DATA_DIR = Path("TrainingData")
+DATA_DIR = Path("DevelopmentData")
 CHECKPOINTS_DIR = Path.cwd() / "segmentation_model_weights"
 CHECKPOINTS_DIR.mkdir(parents=True, exist_ok=True)
 TENSORBOARD_LOGDIR = "segmentation_runs"
@@ -33,6 +40,7 @@ BATCH_SIZE = 32
 N_EPOCHS = 100
 LEARNING_RATE = 1e-4
 TOLERANCE = 0.03  # for early stopping
+DISPLAY_FREQ = 10
 
 # find patient folders in training directory
 # excluding hidden folders (start with .)
@@ -70,35 +78,67 @@ valid_dataloader = DataLoader(
 )
 
 # initialise model, optimiser, and loss function
-loss_function = # TODO: import custom loss function from utils module 
-unet_model = # TODO: import unet implementation from unet module
-optimizer = # TODO: use a default pytorch optimiser
+loss_function = utils.DiceBCELoss()
+unet_model = u_net.UNet(num_classes=1).to(device)
+optimizer = torch.optim.Adam(unet_model.parameters(), lr=LEARNING_RATE)
+minimum_valid_loss = 10  # initial validation loss
 
 minimum_valid_loss = 10  # initial validation loss
-writer = SummaryWriter(log_dir=TENSORBOARD_LOGDIR)  # tensorboard summary
+
+
+# Initialize Neptune experiment
+run = neptune.init_run(
+        description="First try UNET",
+        name="UNET_1_C",
+        project=os.getenv('NEPTUNE_PROJECT_UNET'),
+        api_token=os.getenv("NEPTUNE_KEY"),
+        #mode="debug"
+)
+
+# Track hyperparameters
+run["parameters"] = {
+    "lr": LEARNING_RATE,
+    "bs": BATCH_SIZE,
+    "epochs": N_EPOCHS,
+    "input_sz": IMAGE_SIZE[0] * IMAGE_SIZE[1],
+    "device": torch.device("cuda" if torch.cuda.is_available() else "cpu")
+}
+
 
 # training loop
 for epoch in range(N_EPOCHS):
     current_train_loss = 0.0
     current_valid_loss = 0.0
-    
-    # TODO: training iterations
-    # TODO: research the required implementation of training iterations in pytorch
-    # usually consisting of (1) zeroing the gradients, (2) forward pass of model,
-    # (3) computing loss, (4) backpropagating, (5) stepping the optimiser
+
+    for inputs, labels in tqdm(dataloader, position=0):
+        # needed to zero gradients in each iterations
+        optimizer.zero_grad()
+        outputs = unet_model(inputs.to(device))  # forward pass
+        loss = loss_function(outputs, labels.to(device).float())
+        loss.backward()  # backpropagate loss
+        current_train_loss += loss.item()
+        optimizer.step()  # update weights
 
     # evaluate validation loss
     with torch.no_grad():
-        unet_model.eval() # turns off the training setting to allow evaluation 
-        # TODO: evaluation validation loss
+        unet_model.eval()
+        for inputs, labels in tqdm(valid_dataloader, position=0):
+            outputs = unet_model(inputs.to(device))  # forward pass
+            loss = loss_function(outputs, labels.to(device).float())
+            current_valid_loss += loss.item()
 
-        unet_model.train() # turns training setting back on
+        if (epoch + 1) % DISPLAY_FREQ == 0:
+            img_grid = make_grid(
+                torch.cat((inputs[:5].cpu(), labels.cpu()[:5], outputs.cpu()[:5])), nrow=5, padding=12, pad_value=-1
+            )
+            run["image/predictions"].append(value=neptune.types.File.as_image((np.clip(img_grid[0][np.newaxis], -1, 1) / 2 + 0.5).squeeze()), 
+                                            description=f'EPOCH: {epoch}')
 
-    # write to tensorboard log
-    writer.add_scalar("Loss/train", current_train_loss / len(dataloader), epoch)
-    writer.add_scalar(
-        "Loss/validation", current_valid_loss / len(valid_dataloader), epoch
-    )
+        unet_model.train()
+
+    # Write to neptune log
+    run["train/loss"].append(current_train_loss)
+    run["valid/loss"].append(current_valid_loss)
 
     # if validation loss is improving, save model checkpoint
     # only start saving after 10 epochs
@@ -110,3 +150,6 @@ for epoch in range(N_EPOCHS):
                 weights_dict,
                 CHECKPOINTS_DIR / f"u_net.pth",
             )
+
+# End neptune run
+run.stop()
