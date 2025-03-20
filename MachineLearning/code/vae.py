@@ -67,7 +67,7 @@ class Encoder(nn.Module):
         # max pooling
         self.pool = nn.MaxPool2d((2,2))
         # height and width of images at lowest resolution level
-        _h, _w = # TODO
+        _h, _w = spatial_size[0], spatial_size[1]
 
         # flattening
         self.out = nn.Sequential(nn.Flatten(1), nn.Linear(chs[-1] * _h * _w, 2 * z_dim))
@@ -149,11 +149,11 @@ class Generator(nn.Module):
         x : torch.Tensor
         
         """
-        x = # TODO: fully connected layer
-        x = # TODO: reshape to image dimensions
+        x = self.proj_z(x)
+        x = self.reshape(x)
         for i in range(len(self.chs) - 1):
-            # TODO: transposed convolution
-            # TODO: convolutional block
+            x = self.upconvs(x)[i]
+            x = self.dec_blocks(x)[i]
         return self.head(x)
 
 

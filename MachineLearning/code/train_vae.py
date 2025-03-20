@@ -58,7 +58,7 @@ patients = [
     if not any(part.startswith(".") for part in path.parts)
 ]
 random.shuffle(patients)
-
+print("Amount of folders found: ",len(patients))
 # split in training/validation after shuffling
 partition = {
     "train": patients[:-NO_VALIDATION_PATIENTS],
@@ -88,39 +88,38 @@ valid_dataloader = DataLoader(
 )
 
 # initialise model, optimiser
-vae_model = # TODO 
-optimizer = # TODO 
+loss_function = utils.DiceBCELoss()
+vae_model = vae.VAE()
+optimizer = torch.optim.Adam(vae_model.parameters(), lr=LEARNING_RATE)
 # add a learning rate scheduler based on the lr_lambda function
-scheduler = # TODO
+scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer=optimizer, lr_lambda=lr_lambda)
 
 # training loop
 writer = SummaryWriter(log_dir=TENSORBOARD_LOGDIR)  # tensorboard summary
 for epoch in range(N_EPOCHS):
+    print("EPOCH: ",epoch)
     current_train_loss = 0.0
     current_valid_loss = 0.0
-    
-    # TODO 
-    # training iterations
+
     for x_real, y_real in tqdm(dataloader, position=0):
+        # needed to zero gradients in each iterations
+        optimizer.zero_grad()
+        outputs, mu, logvar = vae_model(x_real.to(device))  # forward pass
+        loss = loss_function(outputs, y_real.to(device).float())
+        loss.backward()  # backpropagate loss
+        current_train_loss += loss.item()
+        optimizer.step()  # update weights
 
 
-    writer.add_scalar("Loss/train", current_train_loss / len(dataloader), epoch)
+
     scheduler.step() # step the learning step scheduler
     
     # evaluate validation loss
     with torch.no_grad():
         vae_model.eval()
-        for x_real, y_real in tqdm(valid_dataloader, position=0):
-        # TODO 
-        
-        # write to tensorboard log
-        writer.add_scalar(
-            "Loss/validation", current_valid_loss / len(valid_dataloader), epoch
-        )
-    
-
         # save examples of real/fake images
         if (epoch + 1) % DISPLAY_FREQ == 0:
+            x_recon = outputs
             img_grid = make_grid(
                 torch.cat((x_recon[:5], x_real[:5])), nrow=5, padding=12, pad_value=-1
             )
@@ -129,7 +128,14 @@ for epoch in range(N_EPOCHS):
             )
         
             # TODO: sample noise 
+
+            noise = vae.get_noise(10, 256)
+
             # TODO: generate 10 images and display
+            image_samples = []
+            for i, single in enumerate(noise):
+                image_samples.append(vae_model.generator(noise))
+
             img_grid = make_grid(
                 torch.cat((image_samples[:5].cpu(), image_samples[5:].cpu())),
                 nrow=5,
