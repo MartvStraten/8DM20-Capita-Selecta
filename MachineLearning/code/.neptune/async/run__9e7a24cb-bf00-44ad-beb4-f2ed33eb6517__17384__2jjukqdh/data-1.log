@@ -1,0 +1,30 @@
+{"obj": {"type": "AssignString", "path": ["sys", "description"], "value": ""}, "version": 1, "at": 1742474405.410946}
+{"obj": {"type": "AssignString", "path": ["monitoring", "e01a8d2d", "hostname"], "value": "S20212077"}, "version": 2, "at": 1742474405.411194}
+{"obj": {"type": "AssignString", "path": ["sys", "hostname"], "value": "S20212077"}, "version": 3, "at": 1742474405.4113405}
+{"obj": {"type": "AssignString", "path": ["monitoring", "e01a8d2d", "pid"], "value": "17384"}, "version": 4, "at": 1742474405.4114156}
+{"obj": {"type": "AssignString", "path": ["monitoring", "e01a8d2d", "tid"], "value": "19104"}, "version": 5, "at": 1742474405.4114852}
+{"obj": {"type": "AssignBool", "path": ["sys", "failed"], "value": false}, "version": 6, "at": 1742474405.411542}
+{"obj": {"type": "AssignFloat", "path": ["parameters", "lr"], "value": 0.0001}, "version": 7, "at": 1742474405.5048215}
+{"obj": {"type": "AssignInt", "path": ["parameters", "bs"], "value": 32}, "version": 8, "at": 1742474405.5050461}
+{"obj": {"type": "AssignInt", "path": ["parameters", "epochs"], "value": 200}, "version": 9, "at": 1742474405.506396}
+{"obj": {"type": "AssignInt", "path": ["parameters", "input_sz"], "value": 4096}, "version": 10, "at": 1742474405.5064633}
+{"obj": {"type": "LogFloats", "path": ["train", "loss"], "values": [{"value": 12.54286204278469, "step": null, "ts": 1742474413.761571}]}, "version": 11, "at": 1742474413.761608}
+{"obj": {"type": "LogFloats", "path": ["valid", "loss"], "values": [{"value": 12.54286204278469, "step": null, "ts": 1742474413.761736}]}, "version": 12, "at": 1742474413.7617528}
+{"obj": {"type": "LogFloats", "path": ["train", "loss"], "values": [{"value": 3.5036173164844513, "step": null, "ts": 1742474421.7312799}]}, "version": 13, "at": 1742474421.7313054}
+{"obj": {"type": "LogFloats", "path": ["valid", "loss"], "values": [{"value": 3.5036173164844513, "step": null, "ts": 1742474421.7315295}]}, "version": 14, "at": 1742474421.7315474}
+{"obj": {"type": "LogFloats", "path": ["train", "loss"], "values": [{"value": 2.404917351901531, "step": null, "ts": 1742474429.403585}]}, "version": 15, "at": 1742474429.4036229}
+{"obj": {"type": "LogFloats", "path": ["valid", "loss"], "values": [{"value": 2.404917351901531, "step": null, "ts": 1742474429.404413}]}, "version": 16, "at": 1742474429.4044528}
+{"obj": {"type": "LogFloats", "path": ["train", "loss"], "values": [{"value": 2.24894991889596, "step": null, "ts": 1742474436.7359238}]}, "version": 17, "at": 1742474436.7359636}
+{"obj": {"type": "LogFloats", "path": ["valid", "loss"], "values": [{"value": 2.24894991889596, "step": null, "ts": 1742474436.7361572}]}, "version": 18, "at": 1742474436.7361817}
+{"obj": {"type": "LogFloats", "path": ["train", "loss"], "values": [{"value": 2.172705214470625, "step": null, "ts": 1742474444.0560489}]}, "version": 19, "at": 1742474444.0561001}
+{"obj": {"type": "LogFloats", "path": ["valid", "loss"], "values": [{"value": 2.172705214470625, "step": null, "ts": 1742474444.0563195}]}, "version": 20, "at": 1742474444.0563443}
+{"obj": {"type": "LogFloats", "path": ["train", "loss"], "values": [{"value": 2.141925811767578, "step": null, "ts": 1742474451.4654741}]}, "version": 21, "at": 1742474451.465503}
+{"obj": {"type": "LogFloats", "path": ["valid", "loss"], "values": [{"value": 2.141925811767578, "step": null, "ts": 1742474451.465833}]}, "version": 22, "at": 1742474451.465864}
+{"obj": {"type": "LogFloats", "path": ["train", "loss"], "values": [{"value": 2.1224782317876816, "step": null, "ts": 1742474458.8775287}]}, "version": 23, "at": 1742474458.8775566}
+{"obj": {"type": "LogFloats", "path": ["valid", "loss"], "values": [{"value": 2.1224782317876816, "step": null, "ts": 1742474458.8778305}]}, "version": 24, "at": 1742474458.8778515}
+{"obj": {"type": "LogFloats", "path": ["train", "loss"], "values": [{"value": 2.107376806437969, "step": null, "ts": 1742474466.2632182}]}, "version": 25, "at": 1742474466.2632546}
+{"obj": {"type": "LogFloats", "path": ["valid", "loss"], "values": [{"value": 2.107376806437969, "step": null, "ts": 1742474466.263593}]}, "version": 26, "at": 1742474466.2636197}
+{"obj": {"type": "LogFloats", "path": ["train", "loss"], "values": [{"value": 2.0888508781790733, "step": null, "ts": 1742474473.6162598}]}, "version": 27, "at": 1742474473.6162868}
+{"obj": {"type": "LogFloats", "path": ["valid", "loss"], "values": [{"value": 2.0888508781790733, "step": null, "ts": 1742474473.6164608}]}, "version": 28, "at": 1742474473.6164875}
+{"obj": {"type": "LogFloats", "path": ["train", "loss"], "values": [{"value": 2.0722136609256268, "step": null, "ts": 1742474480.8327801}]}, "version": 29, "at": 1742474480.8328135}
+{"obj": {"type": "LogFloats", "path": ["valid", "loss"], "values": [{"value": 2.0722136609256268, "step": null, "ts": 1742474480.833037}]}, "version": 30, "at": 1742474480.8330562}
