@@ -37,7 +37,7 @@ if LOG:
         name="VAE_1_C",
         project=os.getenv('NEPTUNE_PROJECT_VAE'),
         api_token=os.getenv("NEPTUNE_KEY"),
-        mode="debug"
+        #mode="debug"
     )  
 
 
