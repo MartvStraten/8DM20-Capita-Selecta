@@ -5,4 +5,4 @@
 *.raw
 *.DS_Store
 ImageRegistration/atlas.dat
-.env
+*.env
