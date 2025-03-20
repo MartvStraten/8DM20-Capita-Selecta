@@ -5,11 +5,16 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from torchvision.utils import make_grid
+from torchvision.utils import make_grid, save_image
 from tqdm import tqdm
-
+from torchsummary import summary
+import neptune
+import os
+from dotenv import load_dotenv
 import utils
 import vae
+import matplotlib.pyplot as plt
+from PIL import Image
 
 # to ensure reproducible training/validation split
 random.seed(41)
@@ -22,8 +27,24 @@ elif torch.backends.mps.is_available():
 else:
     device = torch.device("cpu")
 
+# Starting Neptune session
+load_dotenv()
+LOG = True
+if LOG:
+    run = neptune.init_run(
+        description="Frist try VAE",
+        name="VAE_1_C",
+        project=os.getenv('NEPTUNE_PROJECT'),
+        api_token=os.getenv("NEPTUNE_KEY"),
+    )  
+
+
+
+
 # directorys with data and to store training checkpoints and logs
-DATA_DIR = Path.cwd() / "TrainingData"
+
+DATA_DIR = Path.cwd() / "DevelopmentData"
+print(DATA_DIR)
 CHECKPOINTS_DIR = Path.cwd() / "vae_model_weights"
 CHECKPOINTS_DIR.mkdir(parents=True, exist_ok=True)
 TENSORBOARD_LOGDIR = "vae_runs"
@@ -39,6 +60,15 @@ DISPLAY_FREQ = 10
 
 # dimension of VAE latent space
 Z_DIM = 256
+
+
+params = {
+    "learning_rate": LEARNING_RATE,
+    "optimizer": "Adam"
+}
+if LOG:
+    run["parameters"] = params
+
 
 # function to reduce the
 def lr_lambda(the_epoch):
@@ -88,14 +118,17 @@ valid_dataloader = DataLoader(
 )
 
 # initialise model, optimiser
-loss_function = utils.DiceBCELoss()
+loss_function = vae.vae_loss
 vae_model = vae.VAE()
+vae_model.to(device)
+#print(summary(vae_model, (1,64,64), 32))
 optimizer = torch.optim.Adam(vae_model.parameters(), lr=LEARNING_RATE)
+
 # add a learning rate scheduler based on the lr_lambda function
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer=optimizer, lr_lambda=lr_lambda)
 
+
 # training loop
-writer = SummaryWriter(log_dir=TENSORBOARD_LOGDIR)  # tensorboard summary
 for epoch in range(N_EPOCHS):
     print("EPOCH: ",epoch)
     current_train_loss = 0.0
@@ -105,36 +138,48 @@ for epoch in range(N_EPOCHS):
         # needed to zero gradients in each iterations
         optimizer.zero_grad()
         outputs, mu, logvar = vae_model(x_real.to(device))  # forward pass
-        loss = loss_function(outputs, y_real.to(device).float())
+        loss = loss_function(x_real.to(device), outputs.to(device), mu=mu, logvar=logvar)
         loss.backward()  # backpropagate loss
-        current_train_loss += loss.item()
+        current_train_loss += loss
         optimizer.step()  # update weights
 
 
 
     scheduler.step() # step the learning step scheduler
     
+
+
     # evaluate validation loss
     with torch.no_grad():
         vae_model.eval()
+        # evaluate validation loss
+        for inputs, labels in tqdm(valid_dataloader, position=0):
+            outputs, mu, logvar = vae_model(inputs.to(device))  # forward pass
+            loss = loss_function(inputs.to(device), outputs.to(device), mu=mu, logvar=logvar)
+            current_valid_loss += loss
+
+        optimizer.step()  # update weights
         # save examples of real/fake images
         if (epoch + 1) % DISPLAY_FREQ == 0:
-            x_recon = outputs
+            x_recon = outputs.detach().cpu()
             img_grid = make_grid(
-                torch.cat((x_recon[:5], x_real[:5])), nrow=5, padding=12, pad_value=-1
+                torch.cat((x_recon[:5], x_real.detach().cpu()[:5])), nrow=5, padding=12, pad_value=-1
             )
-            writer.add_image(
-                "Real_fake", np.clip(img_grid[0][np.newaxis], -1, 1) / 2 + 0.5, epoch + 1
-            )
+            save_image(img_grid, "buffer.png")
+            if LOG:
+                run["images/realfake"].append(value=Image.open("buffer.png"), description=f'EPOCH: {epoch}')
+
+            # writer.add_image(
+            #     "Real_fake", np.clip(img_grid[0][np.newaxis], -1, 1) / 2 + 0.5, epoch + 1
+            # )
         
             # TODO: sample noise 
 
-            noise = vae.get_noise(10, 256)
+            noise = vae.get_noise(10, 256, device)
 
             # TODO: generate 10 images and display
-            image_samples = []
-            for i, single in enumerate(noise):
-                image_samples.append(vae_model.generator(noise))
+            
+            image_samples = vae_model.generator(noise)
 
             img_grid = make_grid(
                 torch.cat((image_samples[:5].cpu(), image_samples[5:].cpu())),
@@ -142,13 +187,14 @@ for epoch in range(N_EPOCHS):
                 padding=12,
                 pad_value=-1,
             )
-            writer.add_image(
-                "Samples",
-                np.clip(img_grid[0][np.newaxis], -1, 1) / 2 + 0.5,
-                epoch + 1,
-            )
+            save_image(img_grid, "buffer.png")
+            if LOG:
+                run["images/reconstructions"].append(value=Image.open("buffer.png"), description=f'EPOCH: {epoch}')
+        if LOG:
+            run["train/loss"].append(current_train_loss)
+            run["valid/loss"].append(current_valid_loss)
         vae_model.train()
-
+run.stop()
 weights_dict = {k: v.cpu() for k, v in vae_model.state_dict().items()}
 torch.save(
     weights_dict,

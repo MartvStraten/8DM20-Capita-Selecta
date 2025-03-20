@@ -18,10 +18,10 @@ class Block(nn.Module):
     def __init__(self, in_ch, out_ch):
         super().__init__()
         self.conv1 = nn.Conv2d(in_ch, out_ch, 3, padding=1)
-        self.bn1 = nn.BatchNorm2d()
+        self.bn1 = nn.BatchNorm2d(out_ch)
         self.conv2 = nn.Conv2d(out_ch, out_ch, 3, padding=1)
-        self.bn2 = nn.BatchNorm2d()
-        self.lrelu =  nn.LeakyReLU()
+        self.bn2 = nn.BatchNorm2d(out_ch)
+        self.lrelu =  nn.LeakyReLU(0.1)
 
 
     def forward(self, x):
@@ -37,11 +37,10 @@ class Block(nn.Module):
         # use batch normalisation
 
         x = self.conv1(x)
-        x = self.bn1()
-        x = self.lrelu()
+        x = self.bn1(x)
         x = self.conv2(x)
-        x = self.bn1()
-        x = self.lrelu()
+        x = self.bn1(x)
+        x = self.lrelu(x)
         return x
 
 
@@ -65,10 +64,10 @@ class Encoder(nn.Module):
             [Block(chs[i], chs[i + 1]) for i in range(len(chs) - 1)]
         )
         # max pooling
-        self.pool = nn.MaxPool2d((2,2))
+        self.pool = nn.MaxPool2d((2))
+        
         # height and width of images at lowest resolution level
-        _h, _w = spatial_size[0], spatial_size[1]
-
+        _h, _w = (int(spatial_size[0]*((1/2)**(len(chs)-1))), int(spatial_size[1]*((1/2)**(len(chs)-1))))
         # flattening
         self.out = nn.Sequential(nn.Flatten(1), nn.Linear(chs[-1] * _h * _w, 2 * z_dim))
 
@@ -88,9 +87,9 @@ class Encoder(nn.Module):
         """
 
         for block in self.enc_blocks:
-            x = self.block(x)
+            x = block(x)
             x = self.pool(x)
-
+        x = self.out(x)
         # TODO: output layer          
         return torch.chunk(x, 2, dim=1)  # 2 chunks, 1 each for mu and logvar
 
@@ -125,11 +124,11 @@ class Generator(nn.Module):
         )  # reshaping
 
         self.upconvs = nn.ModuleList(
-            [nn.ConvTranspose2d(chs[i], chs[i], 2, 2) for i in range(len(chs) - 1)]         
+            [nn.ConvTranspose2d(chs[i], chs[i+1], 2, 2) for i in range(len(chs) - 1)]         
         )
 
         self.dec_blocks = nn.ModuleList(
-            [Block(2 * chs[i], chs[i + 1]) for i in range(len(chs) - 1)] 
+            [Block(chs[i + 1], chs[i + 1]) for i in range(len(chs) - 1)] 
         )
         self.head = nn.Sequential(
             nn.Conv2d(self.chs[-1], 1, 1),
@@ -149,11 +148,12 @@ class Generator(nn.Module):
         x : torch.Tensor
         
         """
-        x = self.proj_z(x)
+        x = self.proj_z(z)
         x = self.reshape(x)
-        for i in range(len(self.chs) - 1):
-            x = self.upconvs(x)[i]
-            x = self.dec_blocks(x)[i]
+        for (upc, dec) in zip (self.upconvs, self.dec_blocks):
+            x = upc(x)
+            x = dec(x)
+
         return self.head(x)
 
 
