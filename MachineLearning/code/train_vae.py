@@ -33,11 +33,11 @@ LOG = True
 
 if LOG:
     run = neptune.init_run(
-        description="Frist try VAE",
+        description="First try cVAE",
         name="VAE_1_C",
         project=os.getenv('NEPTUNE_PROJECT_VAE'),
         api_token=os.getenv("NEPTUNE_KEY"),
-        #mode="debug"
+        mode="debug"
     )  
 
 
@@ -140,7 +140,7 @@ for epoch in range(N_EPOCHS):
     for x_real, y_real in tqdm(dataloader, position=0):
         # needed to zero gradients in each iterations
         optimizer.zero_grad()
-        outputs, mu, logvar = vae_model(x_real.to(device))  # forward pass
+        outputs, mu, logvar = vae_model(x_real.to(device), y_real.to(device))  # forward pass
         loss = loss_function(x_real.to(device), outputs.to(device), mu=mu, logvar=logvar)
         loss.backward()  # backpropagate loss
         current_train_loss += loss
@@ -157,7 +157,7 @@ for epoch in range(N_EPOCHS):
         vae_model.eval()
         # evaluate validation loss
         for inputs, labels in tqdm(valid_dataloader, position=0):
-            outputs, mu, logvar = vae_model(inputs.to(device))  # forward pass
+            outputs, mu, logvar = vae_model(inputs.to(device), labels.to(device))  # forward pass
             loss = loss_function(inputs.to(device), outputs.to(device), mu=mu, logvar=logvar)
             current_valid_loss += loss
 

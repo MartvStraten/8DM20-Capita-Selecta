@@ -52,6 +52,7 @@ class Encoder(nn.Module):
     def __init__(self, z_dim=256, chs=(1, 64, 128, 256), spatial_size=[64, 64]):
         super().__init__()
         # convolutional blocks
+
         self.enc_blocks = nn.ModuleList(
             [Block(chs[i], chs[i + 1]) for i in range(len(chs) - 1)]
         )
@@ -65,7 +66,7 @@ class Encoder(nn.Module):
         # flattening
         self.out = nn.Sequential(nn.Flatten(1), nn.Linear(chs[-1] * _h * _w, 2 * z_dim))
 
-    def forward(self, x):
+    def forward(self, x, y = None):
         """Performs the forward pass for all blocks in the encoder.
         Parameters
         ----------
@@ -77,11 +78,23 @@ class Encoder(nn.Module):
             a tensor with the means and a tensor with the log variances of the
             latent distribution
         """
-        for block in self.enc_blocks:
-            x = block(x)          
-            x = self.pool(x) 
-        x = self.out(x)          
-        return torch.chunk(x, 2, dim=1)  # 2 chunks, 1 each for mu and logvar
+
+        if (y is None):
+            for block in self.enc_blocks:
+                x = block(x)          
+                x = self.pool(x) 
+            x = self.out(x)   
+            return torch.chunk(x, 2, dim=1)  # 2 chunks, 1 each for mu and logvar
+        else:
+            x = torch.cat((x,y), dim=1)
+            for block in self.enc_blocks:
+                x = block(x)         
+                x = self.pool(x) 
+            
+            x = self.out(x)   
+            return torch.chunk(x,2, dim=1)
+
+
 
 class Generator(nn.Module):
     """Generator of the VAE
@@ -120,7 +133,7 @@ class Generator(nn.Module):
             nn.Tanh(),
         )  # output layer
 
-    def forward(self, z):
+    def forward(self, z, y = None):
         """Performs the forward pass of generator
         Parameters
         ----------
@@ -130,12 +143,23 @@ class Generator(nn.Module):
         -------
         x : torch.Tensor
         """
+
         x = self.proj_z(z)
         x = self.reshape(x)
-        for i in range(len(self.chs) - 1):
-            x = self.upconvs[i](x)
-            x = self.dec_blocks[i](x)
-        return self.head(x)
+
+        if (y == None):
+            for i in range(len(self.chs) - 1):
+                x = self.upconvs[i](x)
+                x = self.dec_blocks[i](x)
+            return self.head(x)
+        else:
+            x = torch.cat((z, y), dim=1)
+            for i in range(len(self.chs) - 1):
+                x = self.upconvs[i](x)
+                x = self.dec_blocks[i](x)
+            return self.head(x)
+
+
 
 
 class VAE(nn.Module):
@@ -152,7 +176,7 @@ class VAE(nn.Module):
         self.encoder = Encoder(z_dim, enc_chs)
         self.generator = Generator(z_dim, dec_chs)
 
-    def forward(self, x):
+    def forward(self, x, y):
         """Performs a forwards pass of the VAE and returns the reconstruction
         and mean + logvar.
         Parameters
@@ -168,9 +192,10 @@ class VAE(nn.Module):
         float
             the log of the variance of the latent distribution
         """
-        mu, logvar = self.encoder(x)
+
+        mu, logvar = self.encoder(x, y)
         latent_z = sample_z(mu, logvar)
-        output = self.generator(latent_z)
+        output = self.generator(latent_z, y)
         return output, mu, logvar
 
 
