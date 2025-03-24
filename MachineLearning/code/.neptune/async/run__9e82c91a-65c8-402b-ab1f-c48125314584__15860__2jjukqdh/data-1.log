@@ -1,0 +1,10 @@
+{"obj": {"type": "AssignString", "path": ["sys", "description"], "value": ""}, "version": 1, "at": 1742845568.9859219}
+{"obj": {"type": "AssignString", "path": ["monitoring", "2b71606c", "hostname"], "value": "S20212077"}, "version": 2, "at": 1742845568.986089}
+{"obj": {"type": "AssignString", "path": ["sys", "hostname"], "value": "S20212077"}, "version": 3, "at": 1742845568.9861822}
+{"obj": {"type": "AssignString", "path": ["monitoring", "2b71606c", "pid"], "value": "15860"}, "version": 4, "at": 1742845568.986249}
+{"obj": {"type": "AssignString", "path": ["monitoring", "2b71606c", "tid"], "value": "17348"}, "version": 5, "at": 1742845568.9863067}
+{"obj": {"type": "AssignBool", "path": ["sys", "failed"], "value": false}, "version": 6, "at": 1742845568.9863567}
+{"obj": {"type": "AssignFloat", "path": ["parameters", "lr"], "value": 0.0001}, "version": 7, "at": 1742845569.0567873}
+{"obj": {"type": "AssignInt", "path": ["parameters", "bs"], "value": 32}, "version": 8, "at": 1742845569.0569766}
+{"obj": {"type": "AssignInt", "path": ["parameters", "epochs"], "value": 200}, "version": 9, "at": 1742845569.057069}
+{"obj": {"type": "AssignInt", "path": ["parameters", "input_sz"], "value": 4096}, "version": 10, "at": 1742845569.05717}

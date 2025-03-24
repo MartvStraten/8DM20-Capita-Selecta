@@ -1,19 +1,8 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 l1_loss = torch.nn.L1Loss()
-
-class SPADE(nn.Module):
-    def __init__(self, feature_dim, condition_dim=256):
-        super().__init__()
-        self.scale = nn.Linear(condition_dim, feature_dim)
-        self.shift = nn.Linear(condition_dim, feature_dim)
-
-    def forward(self, x, condition):
-        gamma = self.scale(condition).unsqueeze(-1).unsqueeze(-1)
-        beta = self.shift(condition).unsqueeze(-1).unsqueeze(-1)
-        return gamma * x + beta
-
 
 class Block(nn.Module):
     """Basic convolutional building block
@@ -27,41 +16,26 @@ class Block(nn.Module):
     def __init__(self, in_ch, out_ch):
         super().__init__()
         self.conv1 = nn.Conv2d(in_ch, out_ch, 3, padding=1)
-        self.bn1 = nn.BatchNorm2d()
-        self.spade1 = SPADE(out_ch)
+        self.bn1 = nn.BatchNorm2d(out_ch)
         self.conv2 = nn.Conv2d(out_ch, out_ch, 3, padding=1)
-        self.bn2 = nn.BatchNorm2d()
-        self.spade2 = SPADE(out_ch)
+        self.bn2 = nn.BatchNorm2d(out_ch)
         self.lrelu =  nn.LeakyReLU(0.1)
-        self.relu = nn.ReLU()
 
-    def forward(self, x, condition=None, leaky=True):
+    def forward(self, x):
         """Performs a forward pass of the block
         x : torch.Tensor
             the input to the block
         torch.Tensor
             the output of the forward pass
         """
-        # If there is no condition given to the block
-        if condition is None:
-            x = self.conv1(x)
-            x = self.bn1(x)
-            x = self.conv2(x)
-            x = self.bn2(x)
-            if leaky:
-                x = self.lrelu(x)
-            else:
-                x = self.relu(x)
-        # If there is a condition given to the block
-        if condition is not None:
-            x = self.conv1(x)
-            x = self.spade1(x, condition)
-            x = self.conv2(x)
-            x = self.spade2(x, condition)
-            if leaky:
-                x = self.lrelu(x)
-            else:
-                x = self.relu(x)
+        # a block consists of two convolutional layers
+        # with LeakyReLU activations
+        # use batch normalisation
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.conv2(x)
+        x = self.bn2(x)
+        x = self.lrelu(x)
         return x
 
 
@@ -98,20 +72,84 @@ class Encoder(nn.Module):
         ----------
         x : torch.Tensor
             input image to the encoder
-        condition : torch.Tensor
-            input mask to the encoder
+        enc_condition : torch.Tensor
+            encoded input mask to the encoder
         Returns
         -------
         list[torch.Tensor]    
             a tensor with the means and a tensor with the log variances of the
             latent distribution
         """
-        x = torch.cat((x, condition), 1) # Concatenate input and condition
+        # Concatenate input and condition in channel dimension
+        x = torch.cat((x, condition), dim=1)
         for block in self.enc_blocks:
             x = block(x)          
             x = self.pool(x) 
         x = self.out(x)          
         return torch.chunk(x, 2, dim=1)  # 2 chunks, 1 each for mu and logvar
+    
+
+class SPADE(nn.Module):
+    """Spatially-Adaptive Denormalization
+    Parameters
+    ----------
+    x_ch : int
+        number of input channels
+    condition_ch : int     
+        number of condition channels
+    conv_ch : int
+        number of convolution channels for SPADE
+    """
+    def __init__(self, x_ch, condition_ch=1, conv_ch=128):
+        super().__init__()
+        self.norm = nn.BatchNorm2d(x_ch, affine=False)
+        self.conv = nn.Sequential(
+            nn.Conv2d(condition_ch, conv_ch, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True)
+        )
+        self.conv_gamma = nn.Conv2d(conv_ch, x_ch, kernel_size=3, padding=1)
+        self.conv_beta = nn.Conv2d(conv_ch, x_ch, kernel_size=3, padding=1)
+
+    def forward(self, x, condition):
+        condition = F.interpolate(condition, 
+            size=(x.size(2), x.size(3)), 
+            mode="nearest"
+        ) # Downsampling of condition to match shape of x
+        condition = self.conv(condition)
+        return self.norm(x) * self.conv_gamma(condition) + self.conv_beta(condition)
+
+
+class SPADEBlock(nn.Module):
+    """Spatially-Adaptive Denormalization
+    Parameters
+    ----------
+    in_ch : int
+        number of input channels
+    out_ch : int     
+        number of output channels
+    condition_ch : int
+        number of condition channels
+    """
+    def __init__(self, in_ch, out_ch, condition_ch=1):
+        super().__init__()
+        # Main layer
+        self.spade_1 = SPADE(in_ch, condition_ch)
+        self.relu_1 = nn.ReLU(inplace=True)
+        self.conv_1 = nn.Conv2d(in_ch, out_ch, kernel_size=3, padding=1)
+        self.spade_2 = SPADE(out_ch, condition_ch)
+        self.relu_2 = nn.ReLU(inplace=True)
+        self.conv_2 = nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1)
+        # Shortcut layer
+        self.spade_s = SPADE(in_ch, condition_ch)
+        self.relu_s = nn.ReLU(inplace=True)
+        self.conv_s = nn.Conv2d(in_ch, out_ch, kernel_size=3, padding=1)
+    
+    def forward(self, x, condition):
+        y  = self.conv_1(self.relu_1(self.spade_1(x, condition)))
+        y  = self.conv_2(self.relu_2(self.spade_2(y, condition)))
+        y_ = self.conv_s(self.relu_s(self.spade_s(x, condition)))
+        return y + y_
+    
 
 class Generator(nn.Module):
     """Generator of the cVAE
@@ -126,37 +164,27 @@ class Generator(nn.Module):
     w : int, optional
         width of image at lowest resolution level, by default 8    
     """
-    def __init__(self, z_dim=256, chs_enc=(1, 64, 128, 256), chs_dec=(256, 128, 64, 32), h=8, w=8):
+    def __init__(self, z_dim=256, chs=(256, 128, 64, 32), h=8, w=8):
         super().__init__()
-        self.chs_enc = chs_enc
-        self.chs_dec = chs_dec
+        self.z_dim = z_dim
+        self.chs = chs
         self.h = h  
-        self.w = w  
-        self.z_dim = z_dim 
-
-        # model to encode images to a vector
-        self.image_encoder = nn.ModuleList(
-            [Block(chs_enc[i], chs_enc[i + 1]) for i in range(len(chs_enc) - 1)]
-        )
-        # max pooling
-        self.pool = nn.MaxPool2d(2)
-        # flattening
-        self.out = nn.Sequential(nn.Flatten(1), nn.Linear(chs_enc[-1] * self.h * self.w, self.z_dim))
+        self.w = w   
 
         self.projection = nn.Linear(
-            2 * self.z_dim, self.chs_dec[0] * self.h * self.w
+            self.z_dim, self.chs[0] * self.h * self.w
         )  # fully connected layer on latent space
-        self.reshape = lambda x, bs: torch.reshape(
-            x, (bs, self.chs_dec[0], self.h, self.w)
+        self.reshape = lambda x: torch.reshape(
+            x, (-1, self.chs[0], self.h, self.w)
         )  # reshaping
+        self.spade_blocks = nn.ModuleList([
+            SPADEBlock(chs[i + 1], chs[i + 1]) for i in range(len(chs) - 1) 
+        ])
         self.upconvs = nn.ModuleList(
-            [nn.ConvTranspose2d(chs_dec[i], chs_dec[i + 1], 2, 2) for i in range(len(chs_dec) - 1)]            
+            [nn.ConvTranspose2d(chs[i], chs[i + 1], 2, 2) for i in range(len(chs) - 1)]            
         ) # transposed convolution
-        self.dec_blocks = nn.ModuleList(
-            [Block(chs_dec[i + 1], chs_dec[i + 1]) for i in range(len(chs_dec) - 1)]           
-        ) # conv blocks
         self.head = nn.Sequential(
-            nn.Conv2d(self.chs_dec[-1], 1, 1),
+            nn.Conv2d(self.chs[-1], 1, 1),
             nn.Tanh(),
         )  # output layer
 
@@ -166,28 +194,17 @@ class Generator(nn.Module):
         ----------
         z : torch.Tensor
             input to the generator
-        condition : torch.Tensor
-            condition to the generator
+        enc_condition : torch.Tensor
+            encoded condition to the generator
         Returns
         -------
         x : torch.Tensor
         """
-        # batch size
-        bs = condition.shape[0]
-
-        # encode condition image
-        for block in self.image_encoder:
-            condition = block(condition)          
-            condition = self.pool(condition) 
-        condition = self.out(condition) # [batch_size, z_dim]  
-
-        # concatenate noise vector and condition
-        x = torch.cat((z, condition), -1)
-        x = self.projection(x)
-        x = self.reshape(x, bs)
-        for i in range(len(self.chs_dec) - 1):
+        x = self.projection(z)
+        x = self.reshape(x)
+        for i in range(len(self.chs) - 1):
             x = self.upconvs[i](x)
-            x = self.dec_blocks[i](x)
+            x = self.spade_blocks[i](x, condition)
         return self.head(x)
 
 
