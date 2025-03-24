@@ -80,7 +80,6 @@ class ProstateMRDataset(torch.utils.data.Dataset):
         index : int
             index of the image/segmentation in dataset
         """
-
         # compute which slice an index corresponds to
         patient = index // self.no_slices
         the_slice = index - (patient * self.no_slices)
