@@ -12,8 +12,14 @@ import neptune
 import os
 from dotenv import load_dotenv
 import utils
+from optuna.trial import TrialState
 import vae
+import torch.optim as optim
 import matplotlib.pyplot as plt
+import optuna
+import neptune.integrations.optuna as npt_utils
+import sklearn
+
 from PIL import Image
 
 # to ensure reproducible training/validation split
@@ -31,15 +37,16 @@ else:
 load_dotenv()
 LOG = True
 
-if LOG:
-    run = neptune.init_run(
-        description="Frist try VAE",
-        name="VAE_1_C",
-        project=os.getenv('NEPTUNE_PROJECT_VAE'),
-        api_token=os.getenv("NEPTUNE_KEY"),
-        #mode="debug"
-    )  
 
+run = neptune.init_run(
+    description="Parameter Sweep",
+    name="Parameter Sweep",
+    project=os.getenv('NEPTUNE_PROJECT_VAE'),
+    api_token=os.getenv("NEPTUNE_KEY"),
+    #mode="debug"
+)  
+
+neptune_callback = npt_utils.NeptuneCallback(run)
 
 
 
@@ -56,7 +63,7 @@ TENSORBOARD_LOGDIR = "vae_runs"
 NO_VALIDATION_PATIENTS = 2
 IMAGE_SIZE = [64, 64]
 BATCH_SIZE = 32
-N_EPOCHS = 200
+N_EPOCHS = 100
 DECAY_LR_AFTER = 50
 LEARNING_RATE = 1e-4
 DISPLAY_FREQ = 10
@@ -64,13 +71,6 @@ DISPLAY_FREQ = 10
 # dimension of VAE latent space
 Z_DIM = 256
 
-
-params = {
-    "learning_rate": LEARNING_RATE,
-    "optimizer": "Adam"
-}
-if LOG:
-    run["parameters"] = params
 
 
 # function to reduce the
@@ -99,108 +99,109 @@ partition = {
 }
 
 # load training data and create DataLoader with batching and shuffling
+def load_set():
+    dataset = utils.ProstateMRDataset(partition["train"], IMAGE_SIZE, valid=True) # in my experiments the augmentations
+    # did not help, so I set valid=True to disable them
+    dataloader = DataLoader(
+        dataset,
+        batch_size=BATCH_SIZE,
+        shuffle=True,
+        drop_last=True,
+        pin_memory=True,
+    )
 
-dataset = utils.ProstateMRDataset(partition["train"], IMAGE_SIZE, valid=True) # in my experiments the augmentations
-# did not help, so I set valid=True to disable them
-dataloader = DataLoader(
-    dataset,
-    batch_size=BATCH_SIZE,
-    shuffle=True,
-    drop_last=True,
-    pin_memory=True,
-)
+    # load validation data
+    valid_dataset = utils.ProstateMRDataset(partition["validation"], IMAGE_SIZE, valid=True)
+    valid_dataloader = DataLoader(
+        valid_dataset,
+        batch_size=BATCH_SIZE,
+        shuffle=True,
+        drop_last=True,
+        pin_memory=True,
+    )
+    return dataloader, valid_dataloader
 
-# load validation data
-valid_dataset = utils.ProstateMRDataset(partition["validation"], IMAGE_SIZE, valid=True)
-valid_dataloader = DataLoader(
-    valid_dataset,
-    batch_size=BATCH_SIZE,
-    shuffle=True,
-    drop_last=True,
-    pin_memory=True,
-)
+def objective(trial):
+    dataloader, valid_dataloader = load_set()
+    # initialise model, optimiser
+    loss_function = vae.vae_loss
+    vae_model = vae.VAE().to(device)
+    #print(summary(vae_model, (1,64,64), 32))
+    optimizer_name = trial.suggest_categorical("optimizer", ["Adam", "RMSprop", "SGD"])
+    lr = trial.suggest_float("lr", 1e-5, 1e-1, log=True)
+    optimizer = getattr(optim, optimizer_name)(vae_model.parameters(), lr=lr)
 
-# initialise model, optimiser
-loss_function = vae.vae_loss
-vae_model = vae.VAE()
-vae_model.to(device)
-#print(summary(vae_model, (1,64,64), 32))
-optimizer = torch.optim.Adam(vae_model.parameters(), lr=LEARNING_RATE)
+    # add a learning rate scheduler based on the lr_lambda function
+    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer=optimizer, lr_lambda=lr_lambda)
 
-# add a learning rate scheduler based on the lr_lambda function
-scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer=optimizer, lr_lambda=lr_lambda)
+    for epoch in range(N_EPOCHS):
+        print("EPOCH: ",epoch)
+        current_train_loss = 0.0
+        current_valid_loss = 0.0
 
+        for x_real, y_real in tqdm(dataloader, position=0):
+            # needed to zero gradients in each iterations
+            optimizer.zero_grad()
+            outputs, mu, logvar = vae_model(x_real.to(device))  # forward pass
+            loss = loss_function(x_real.to(device), outputs.to(device), mu=mu, logvar=logvar)
+            loss.backward()  # backpropagate loss
+            current_train_loss += loss
+            optimizer.step()  # update weights
 
-# training loop
-for epoch in range(N_EPOCHS):
-    print("EPOCH: ",epoch)
-    current_train_loss = 0.0
-    current_valid_loss = 0.0
-
-    for x_real, y_real in tqdm(dataloader, position=0):
-        # needed to zero gradients in each iterations
-        optimizer.zero_grad()
-        outputs, mu, logvar = vae_model(x_real.to(device))  # forward pass
-        loss = loss_function(x_real.to(device), outputs.to(device), mu=mu, logvar=logvar)
-        loss.backward()  # backpropagate loss
-        current_train_loss += loss
-        optimizer.step()  # update weights
-
-
-
-    scheduler.step() # step the learning step scheduler
-    
-
-
-    # evaluate validation loss
-    with torch.no_grad():
-        vae_model.eval()
-        # evaluate validation loss
-        for inputs, labels in tqdm(valid_dataloader, position=0):
-            outputs, mu, logvar = vae_model(inputs.to(device))  # forward pass
-            loss = loss_function(inputs.to(device), outputs.to(device), mu=mu, logvar=logvar)
-            current_valid_loss += loss
-
-        # save examples of real/fake images
-        if (epoch + 1) % DISPLAY_FREQ == 0:
-            x_recon = outputs
-            img_grid = make_grid(
-                torch.cat((x_recon[:5].cpu(), x_real.detach()[:5].cpu())), nrow=5, padding=12, pad_value=-1
-            )
-            save_image(img_grid, "buffer.png")
-            if LOG:
-                run["images/realfake"].append(value=neptune.types.File.as_image((np.clip(img_grid[0][np.newaxis], -1, 1) / 2 + 0.5).squeeze()), 
-                                              description=f'EPOCH: {epoch}')
-
-            # writer.add_image(
-            #     "Real_fake", np.clip(img_grid[0][np.newaxis], -1, 1) / 2 + 0.5, epoch + 1
-            # )
+        scheduler.step() # step the learning step scheduler
         
-            # TODO: sample noise 
+        # evaluate validation loss
+        with torch.no_grad():
+            vae_model.eval()
+            # evaluate validation loss
+            for inputs, labels in tqdm(valid_dataloader, position=0):
+                outputs, mu, logvar = vae_model(inputs.to(device))  # forward pass
+                loss = loss_function(inputs.to(device), outputs.to(device), mu=mu, logvar=logvar)
+                current_valid_loss += loss
 
-            noise = vae.get_noise(10, 256, device)
-
-            # TODO: generate 10 images and display
+            # save examples of real/fake images
+            if (epoch + 1) % DISPLAY_FREQ == 0:
+                x_recon = outputs
+                img_grid = make_grid(
+                    torch.cat((x_recon[:5].cpu(), x_real.detach()[:5].cpu())), nrow=5, padding=12, pad_value=-1
+                )
             
-            image_samples = vae_model.generator(noise)
+                run["images/"+str(trial.number)+"/realfake"].append(value=neptune.types.File.as_image((np.clip(img_grid[0][np.newaxis], -1, 1) / 2 + 0.5).squeeze()), 
+                                            description=f'EPOCH: {epoch}')
+            
+            run["train/loss"+str(trial.number)].append(current_train_loss)
+            run["valid/loss"+str(trial.number)].append(current_valid_loss)
+            mean_squared = sklearn.metrics.mean_squared_error(outputs[0].cpu().detach().numpy()[0,:,:], x_real[0].cpu().detach().numpy()[0,:,:])
+            run["MSE/"+str(trial.number)].append(mean_squared)
+            trial.report(mean_squared, epoch) 
+            vae_model.train()
 
-            img_grid = make_grid(
-                torch.cat((image_samples[:5].cpu(), image_samples[5:].cpu())),
-                nrow=5,
-                padding=12,
-                pad_value=-1,
-            )
-            save_image(img_grid, "buffer.png")
-            if LOG:
-                run["images/reconstructions"].append(value=neptune.types.File.as_image((np.clip(img_grid[0][np.newaxis], -1, 1) / 2 + 0.5).squeeze()), 
-                                                     description=f'EPOCH: {epoch}')
-        if LOG:
-            run["train/loss"].append(current_train_loss)
-            run["valid/loss"].append(current_valid_loss)
-        vae_model.train()
-run.stop()
-weights_dict = {k: v.cpu() for k, v in vae_model.state_dict().items()}
-torch.save(
-    weights_dict,
-    CHECKPOINTS_DIR / "vae_model.pth",
-)
+            # Handle pruning based on the intermediate value.
+            if trial.should_prune():
+                raise optuna.exceptions.TrialPruned()
+            if np.isnan(mean_squared):
+                mean_squared = 0
+    return mean_squared
+
+
+if __name__ == "__main__":
+    study = optuna.create_study(direction="maximize")
+    study.optimize(
+        objective,
+        n_trials=100,
+        callbacks=[neptune_callback]
+    )
+
+    pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
+    complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
+
+    print("Study statistics: ")
+    print("  Number of finished trials: ", len(study.trials))
+    print("  Number of pruned trials: ", len(pruned_trials))
+    print("  Number of complete trials: ", len(complete_trials))
+
+    print("Best trial:")
+    trial = study.best_trial
+
+    print("  Value: ", trial.value)
+    run.stop()

@@ -9,4 +9,6 @@ torch
 torchio
 torchvision
 tqdm
+neptune
+neptune-optuna
 
