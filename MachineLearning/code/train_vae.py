@@ -63,13 +63,13 @@ TENSORBOARD_LOGDIR = "vae_runs"
 NO_VALIDATION_PATIENTS = 2
 IMAGE_SIZE = [64, 64]
 BATCH_SIZE = 32
-N_EPOCHS = 100
+N_EPOCHS = 50
 DECAY_LR_AFTER = 50
 LEARNING_RATE = 1e-4
 DISPLAY_FREQ = 10
 
 # dimension of VAE latent space
-Z_DIM = 256
+#Z_DIM = 256
 
 
 
@@ -121,14 +121,18 @@ def load_set():
     )
     return dataloader, valid_dataloader
 
-def objective(trial):
+def objective(trial: optuna.trial):
     dataloader, valid_dataloader = load_set()
     # initialise model, optimiser
     loss_function = vae.vae_loss
-    vae_model = vae.VAE().to(device)
+    zdim = trial.suggest_categorical("z_dim", [256, 2*256, 4*256])
+    reluvalue = trial.suggest_float("Relu_value", 0.01, 0.5)
+    betavalue = trial.suggest_float("Beta_value", 0.01, 1.4)
+    vae_model = vae.VAE(z_dim=zdim, relu_value=reluvalue).to(device)
     #print(summary(vae_model, (1,64,64), 32))
-    optimizer_name = trial.suggest_categorical("optimizer", ["Adam", "RMSprop", "SGD"])
-    lr = trial.suggest_float("lr", 1e-5, 1e-1, log=True)
+    optimizer_name = "Adam"
+
+    lr = trial.suggest_float("lr", 1e-5, 1e-3, log=True)
     optimizer = getattr(optim, optimizer_name)(vae_model.parameters(), lr=lr)
 
     # add a learning rate scheduler based on the lr_lambda function
@@ -143,7 +147,7 @@ def objective(trial):
             # needed to zero gradients in each iterations
             optimizer.zero_grad()
             outputs, mu, logvar = vae_model(x_real.to(device))  # forward pass
-            loss = loss_function(x_real.to(device), outputs.to(device), mu=mu, logvar=logvar)
+            loss = loss_function(x_real.to(device), outputs.to(device), mu=mu, logvar=logvar, beta=betavalue)
             loss.backward()  # backpropagate loss
             current_train_loss += loss
             optimizer.step()  # update weights
@@ -156,7 +160,7 @@ def objective(trial):
             # evaluate validation loss
             for inputs, labels in tqdm(valid_dataloader, position=0):
                 outputs, mu, logvar = vae_model(inputs.to(device))  # forward pass
-                loss = loss_function(inputs.to(device), outputs.to(device), mu=mu, logvar=logvar)
+                loss = loss_function(inputs.to(device), outputs.to(device), mu=mu, logvar=logvar, beta=betavalue)
                 current_valid_loss += loss
 
             # save examples of real/fake images
@@ -169,28 +173,31 @@ def objective(trial):
                 run["images/"+str(trial.number)+"/realfake"].append(value=neptune.types.File.as_image((np.clip(img_grid[0][np.newaxis], -1, 1) / 2 + 0.5).squeeze()), 
                                             description=f'EPOCH: {epoch}')
             
-            run["train/loss"+str(trial.number)].append(current_train_loss)
-            run["valid/loss"+str(trial.number)].append(current_valid_loss)
-            mean_squared = sklearn.metrics.mean_squared_error(outputs[0].cpu().detach().numpy()[0,:,:], x_real[0].cpu().detach().numpy()[0,:,:])
-            run["MSE/"+str(trial.number)].append(mean_squared)
-            trial.report(mean_squared, epoch) 
+            run["train/"+str(trial.number)+"/loss"].append(current_train_loss)
+            run["valid/"+str(trial.number)+"/loss"].append(current_valid_loss)
+            kld_loss = vae.kld_loss(mu.cpu(),logvar.cpu())
+            run["valid/"+str(trial.number)+"/KLDloss"].append(kld_loss)
+            trial.report(kld_loss, epoch) 
             vae_model.train()
 
             # Handle pruning based on the intermediate value.
             if trial.should_prune():
                 raise optuna.exceptions.TrialPruned()
-            if np.isnan(mean_squared):
-                mean_squared = 0
-    return mean_squared
+            if np.isnan(kld_loss):
+                kld_loss = 0
+    return kld_loss
 
 
 if __name__ == "__main__":
-    study = optuna.create_study(direction="maximize")
-    study.optimize(
-        objective,
-        n_trials=100,
-        callbacks=[neptune_callback]
-    )
+    try:
+        study = optuna.create_study(direction="minimize")
+        study.optimize(
+            objective,
+            n_trials=100,
+            callbacks=[neptune_callback]
+        )
+    except KeyboardInterrupt:
+        print("Stopping study")
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
@@ -199,9 +206,13 @@ if __name__ == "__main__":
     print("  Number of finished trials: ", len(study.trials))
     print("  Number of pruned trials: ", len(pruned_trials))
     print("  Number of complete trials: ", len(complete_trials))
+    run["no_finished_trials"].append(len(study.trials))
+    run["no_pruned_trials"].append(len(pruned_trials))
+    run["no_complete_rials"].append(len(complete_trials))
 
     print("Best trial:")
     trial = study.best_trial
+
 
     print("  Value: ", trial.value)
     run.stop()

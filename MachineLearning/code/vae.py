@@ -12,13 +12,13 @@ class Block(nn.Module):
     out_ch : int     
         number of output channels of the block
     """
-    def __init__(self, in_ch, out_ch):
+    def __init__(self, in_ch, out_ch, relu_value):
         super().__init__()
         self.conv1 = nn.Conv2d(in_ch, out_ch, 3, padding=1)
         self.bn1 = nn.BatchNorm2d(out_ch)
         self.conv2 = nn.Conv2d(out_ch, out_ch, 3, padding=1)
         self.bn2 = nn.BatchNorm2d(out_ch)
-        self.lrelu =  nn.LeakyReLU(0.05)
+        self.lrelu =  nn.LeakyReLU(relu_value)
 
     def forward(self, x):
         """Performs a forward pass of the block
@@ -49,11 +49,11 @@ class Encoder(nn.Module):
     chs : tuple
         hold the number of input channels for each encoder block
     """
-    def __init__(self, z_dim=256, chs=(1, 64, 128, 256), spatial_size=[64, 64]):
+    def __init__(self, z_dim=256, chs=(1, 64, 128, 256), spatial_size=[64, 64], relu_value=0.01):
         super().__init__()
         # convolutional blocks
         self.enc_blocks = nn.ModuleList(
-            [Block(chs[i], chs[i + 1]) for i in range(len(chs) - 1)]
+            [Block(chs[i], chs[i + 1], relu_value) for i in range(len(chs) - 1)]
         )
         # max pooling
         self.pool = nn.MaxPool2d(2)
@@ -96,7 +96,7 @@ class Generator(nn.Module):
     w : int, optional
         width of image at lowest resolution level, by default 8    
     """
-    def __init__(self, z_dim=256, chs=(256, 128, 64, 32), h=8, w=8):
+    def __init__(self, z_dim=256, chs=(256, 128, 64, 32), h=8, w=8, relu_value=0.01):
         super().__init__()
         self.chs = chs
         self.h = h  
@@ -113,7 +113,7 @@ class Generator(nn.Module):
             [nn.ConvTranspose2d(chs[i], chs[i + 1], 2, 2) for i in range(len(chs) - 1)]            
         ) # transposed convolution
         self.dec_blocks = nn.ModuleList(
-            [Block(chs[i + 1], chs[i + 1]) for i in range(len(chs) - 1)]           
+            [Block(chs[i + 1], chs[i + 1], relu_value) for i in range(len(chs) - 1)]           
         ) # conv blocks
         self.head = nn.Sequential(
             nn.Conv2d(self.chs[-1], 1, 1),
@@ -147,10 +147,10 @@ class VAE(nn.Module):
     dec_chs : tuple 
         holds the number of input channels of each block in the decoder
     """
-    def __init__(self, z_dim=256, enc_chs=(1, 64, 128, 256), dec_chs=(256, 128, 64, 32)):
+    def __init__(self, z_dim=256, enc_chs=(1, 64, 128, 256), dec_chs=(256, 128, 64, 32), relu_value=0.01):
         super().__init__()
-        self.encoder = Encoder(z_dim, enc_chs)
-        self.generator = Generator(z_dim, dec_chs)
+        self.encoder = Encoder(z_dim, enc_chs, relu_value=relu_value)
+        self.generator = Generator(z_dim, dec_chs, relu_value=relu_value)
 
     def forward(self, x):
         """Performs a forwards pass of the VAE and returns the reconstruction
