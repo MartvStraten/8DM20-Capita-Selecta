@@ -1,8 +1,12 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import lpips
+import sigpy as sp
 
 l1_loss = torch.nn.L1Loss()
+lpips_loss = lpips.LPIPS(net='vgg').to(torch.device("cuda"))
+my_finite_difference = sp.to_pytorch_function(sp.linop.FiniteDifference(ishape=(64, 64)))
 
 class Block(nn.Module):
     """Basic convolutional building block
@@ -107,14 +111,16 @@ class SPADE(nn.Module):
             nn.Conv2d(condition_ch, conv_ch, kernel_size=3, padding=1),
             nn.ReLU(inplace=True)
         )
+        # Convolutions for learnable gamma and beta tensors
         self.conv_gamma = nn.Conv2d(conv_ch, x_ch, kernel_size=3, padding=1)
         self.conv_beta = nn.Conv2d(conv_ch, x_ch, kernel_size=3, padding=1)
 
     def forward(self, x, condition):
+        # Downsampling of condition to match shape of x
         condition = F.interpolate(condition, 
             size=(x.size(2), x.size(3)), 
             mode="nearest"
-        ) # Downsampling of condition to match shape of x
+        ) 
         condition = self.conv(condition)
         return self.norm(x) * self.conv_gamma(condition) + self.conv_beta(condition)
 
@@ -139,7 +145,7 @@ class SPADEBlock(nn.Module):
         self.spade_2 = SPADE(out_ch, condition_ch)
         self.relu_2 = nn.ReLU(inplace=True)
         self.conv_2 = nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1)
-        # Shortcut layer
+        # Residual layer
         self.spade_s = SPADE(in_ch, condition_ch)
         self.relu_s = nn.ReLU(inplace=True)
         self.conv_s = nn.Conv2d(in_ch, out_ch, kernel_size=3, padding=1)
@@ -289,7 +295,22 @@ def kld_loss(mu, logvar):
     """
     return -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())
 
-def vae_loss(inputs, recons, mu, logvar, beta=1):
+def regularize_var(recon):
+    """Function to calculate the variation in image, 
+    which is used to regulate the loss"""
+    variation_loss = 0
+    batch_size = recon.shape[0]
+    for i in range(batch_size):
+        # Calculate variation
+        variation = my_finite_difference.apply(recon[i][0])
+        # Norm
+        norm_variation = torch.norm(variation, p=2)**2
+        # Calculate regularization loss
+        variation_loss += torch.sqrt(norm_variation)
+
+    return variation_loss
+
+def vae_loss(inputs, recons, mu, logvar, beta=1.4):
     """Computes the VAE loss, sum of reconstruction and KLD loss
     Parameters
     ----------
@@ -306,4 +327,15 @@ def vae_loss(inputs, recons, mu, logvar, beta=1):
     float
         sum of reconstruction and KLD loss
     """
-    return l1_loss(inputs, recons) + beta*kld_loss(mu, logvar)
+    # Reconstruction loss: L1 loss
+    recon_img_loss = l1_loss(inputs, recons)
+    # Perceptual loss using LPIPS
+    perceptual = lpips_loss(inputs, recons).mean()
+    # Combined reconstruction loss (L1 + 0.5 * perceptual)
+    recon_loss = recon_img_loss + 0.5 * perceptual
+    # KLD loss
+    kld = kld_loss(mu, logvar)
+    # Variation regularization term
+    variational_loss = regularize_var(recons)
+
+    return recon_loss + beta*kld + 1e-4*variational_loss
