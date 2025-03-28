@@ -5,3 +5,5 @@
 *.raw
 *.DS_Store
 result*
+*.dat
+*.npy

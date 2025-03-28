@@ -49,17 +49,19 @@
 
 // ******************* Optimizer ****************************
 
-(MaximumNumberOfIterations 2500) 
+(MaximumNumberOfIterations 1500) 
 
 // **************** Image sampling **********************
 
 // Number of spatial samples used to compute the mutual
 // information (and its derivative) in each iteration.
-(NumberOfSpatialSamples 4000)
+(NumberOfSpatialSamples 2000)
 
 // Refresh these spatial samples in every iteration, and select
 // them randomly. 
 (ImageSampler "RandomCoordinate")
+(UseRandomSampleRegion "true")
+(SampleRegionSize 50.0)
 (NewSamplesEveryIteration "true")
 (CheckNumberOfSamples "false")
 
@@ -74,7 +76,7 @@
 (DefaultPixelValue 0)
 
 // Choose whether to generate the deformed moving image.
-(WriteResultImage "true")
+(WriteResultImage "false")
 
 // The pixel type and format of the resulting deformed moving image
 (ResultImagePixelType "short")
