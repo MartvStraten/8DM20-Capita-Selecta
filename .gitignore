@@ -4,5 +4,7 @@
 *.jpg
 *.raw
 *.DS_Store
+*.dat
+*.npy
 ImageRegistration/atlas.dat
 MachineLearning/code/env.py
