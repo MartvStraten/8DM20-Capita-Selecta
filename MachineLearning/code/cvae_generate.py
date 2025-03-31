@@ -50,6 +50,7 @@ def floodfill_data(bins, bin_edges, binned_masks, cvae_model):
             # generate image with cvae
             noise = torch.randn(1, Z_DIM)
             generated_mr = cvae_model.generator(noise, aug_mask)
+
             # add mask and generated image to arrays
             new_mr.append(generated_mr)
             new_masks.append(aug_mask)
