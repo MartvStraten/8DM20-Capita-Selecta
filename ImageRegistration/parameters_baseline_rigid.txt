@@ -18,7 +18,7 @@
 (Metric "AdvancedMattesMutualInformation")
 (Optimizer "AdaptiveStochasticGradientDescent")
 
-(ResampleInterpolator "FinalNearestNeighborInterpolator")
+(ResampleInterpolator "FinalBSplineInterpolator")
 (Resampler "DefaultResampler")
 
 (Transform "EulerTransform")
@@ -64,11 +64,13 @@
 
 // Number of spatial samples used to compute the mutual
 // information (and its derivative) in each iteration.
-(NumberOfSpatialSamples 4000)
+(NumberOfSpatialSamples 2000)
 
 // Refresh these spatial samples in every iteration, and select
 // them randomly. 
 (ImageSampler "RandomCoordinate")
+(UseRandomSampleRegion "true")
+(SampleRegionSize 50.0)
 (NewSamplesEveryIteration "true")
 (CheckNumberOfSamples "false")
 
