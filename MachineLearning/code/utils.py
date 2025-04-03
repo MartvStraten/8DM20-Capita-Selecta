@@ -221,12 +221,12 @@ class CombinedProstateMRDataset(torch.utils.data.Dataset):
         self.pt_norm_transform = transforms.Normalize(
             self.pt_train_data_mean, self.pt_train_data_std
         )
-
-        self.cvae_train_data_mean = np.mean(self.cvae_mr_image_list)
-        self.cvae_train_data_std = np.std(self.cvae_mr_image_list)
-        self.cvae_norm_transform = transforms.Normalize(
-            self.cvae_train_data_mean, self.cvae_train_data_std
-        )
+        if self.cvae_mr_image_list:
+            self.cvae_train_data_mean = np.mean(self.cvae_mr_image_list)
+            self.cvae_train_data_std = np.std(self.cvae_mr_image_list)
+            self.cvae_norm_transform = transforms.Normalize(
+                self.cvae_train_data_mean, self.cvae_train_data_std
+            )
 
         # number of patients and slices in the dataset
         self.mr_image_list = self.pt_mr_image_list + self.cvae_mr_image_list
